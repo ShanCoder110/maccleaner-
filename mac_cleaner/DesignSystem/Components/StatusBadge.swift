@@ -58,14 +58,3 @@ struct StatusBadge: View {
     }
 }
 
-#Preview {
-    HStack(spacing: 8) {
-        StatusBadge(title: "Safe", style: .success, icon: "checkmark.circle.fill")
-        StatusBadge(title: "Review", style: .warning, icon: "exclamationmark.triangle.fill")
-        StatusBadge(title: "Locked", style: .danger, icon: "lock.fill")
-        StatusBadge(title: "Scanning", style: .info, icon: "circle.dotted")
-        StatusBadge(title: "Idle", style: .neutral)
-    }
-    .padding(40)
-    .background(AppColors.background)
-}

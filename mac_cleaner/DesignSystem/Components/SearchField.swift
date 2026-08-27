@@ -63,10 +63,3 @@ struct SearchField: View {
     }
 }
 
-#Preview {
-    @Previewable @State var query = ""
-    SearchField(text: $query, placeholder: "Search applications")
-        .frame(width: 280)
-        .padding(40)
-        .background(AppColors.background)
-}

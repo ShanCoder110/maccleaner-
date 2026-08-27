@@ -62,12 +62,3 @@ struct IconButton: View {
     }
 }
 
-#Preview {
-    HStack(spacing: 8) {
-        IconButton(systemName: "sidebar.left") {}
-        IconButton(systemName: "gearshape", isActive: true) {}
-        IconButton(systemName: "arrow.clockwise") {}
-    }
-    .padding(40)
-    .background(AppColors.background)
-}

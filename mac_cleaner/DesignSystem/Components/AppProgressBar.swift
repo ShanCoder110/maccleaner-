@@ -63,7 +63,7 @@ struct AppProgressRing: View {
 
             if showsPercent {
                 Text("\(Int(clampedProgress * 100))")
-                    .font(AppTypography.captionMedium)
+                    .font(size >= 88 ? AppTypography.title : AppTypography.captionMedium)
                     .foregroundStyle(AppColors.textPrimary)
                     .monospacedDigit()
             }
@@ -76,12 +76,3 @@ struct AppProgressRing: View {
     }
 }
 
-#Preview {
-    VStack(spacing: 24) {
-        AppProgressBar(progress: 0.62, showsLabel: true)
-            .frame(width: 240)
-        AppProgressRing(progress: 0.74)
-    }
-    .padding(40)
-    .background(AppColors.background)
-}

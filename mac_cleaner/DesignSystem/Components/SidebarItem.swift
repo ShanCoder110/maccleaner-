@@ -79,13 +79,3 @@ struct SidebarSectionLabel: View {
     }
 }
 
-#Preview {
-    VStack(spacing: 4) {
-        SidebarItem(title: "Smart Scan", systemImage: "sparkles", isSelected: true) {}
-        SidebarItem(title: "Applications", systemImage: "square.grid.2x2", badge: "12") {}
-        SidebarItem(title: "Junk Files", systemImage: "trash", badge: "2.1 GB") {}
-    }
-    .padding(16)
-    .frame(width: 220)
-    .background(AppColors.sidebarBackground)
-}

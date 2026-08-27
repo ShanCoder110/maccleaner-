@@ -75,28 +75,3 @@ struct SelectableAppCard<Content: View>: View {
         isSelected ? AppColors.accent.opacity(0.35) : AppColors.border
     }
 }
-
-#Preview {
-    VStack(spacing: 16) {
-        AppCard {
-            VStack(alignment: .leading, spacing: 8) {
-                Text("System Junk")
-                    .font(AppTypography.title2)
-                    .foregroundStyle(AppColors.textPrimary)
-                Text("Caches, logs, and temporary files")
-                    .font(AppTypography.callout)
-                    .foregroundStyle(AppColors.textSecondary)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-        }
-
-        SelectableAppCard(isSelected: true, action: {}) {
-            Text("Selected item")
-                .font(AppTypography.bodyMedium)
-                .foregroundStyle(AppColors.textPrimary)
-        }
-    }
-    .padding(40)
-    .frame(width: 360)
-    .background(AppColors.background)
-}

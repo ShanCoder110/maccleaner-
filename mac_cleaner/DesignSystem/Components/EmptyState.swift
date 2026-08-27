@@ -59,16 +59,3 @@ struct EmptyState: View {
     }
 }
 
-#Preview {
-    EmptyState(
-        title: "Nothing selected",
-        message: "Choose an application or run a smart scan to find leftover files.",
-        systemImage: "sparkles.rectangle.stack",
-        primaryActionTitle: "Smart Scan",
-        primaryAction: {},
-        secondaryActionTitle: "Learn More",
-        secondaryAction: {}
-    )
-    .frame(width: 480, height: 360)
-    .background(AppColors.background)
-}

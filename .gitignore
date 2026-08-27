@@ -1,0 +1,7 @@
+.derivedData/
+xcuserdata/
+*.xcuserstate
+.DS_Store
+.cursor/
+*.md
+!README.md

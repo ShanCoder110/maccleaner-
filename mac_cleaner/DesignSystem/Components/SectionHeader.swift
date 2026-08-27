@@ -41,10 +41,3 @@ struct SectionHeader<Trailing: View>: View {
     }
 }
 
-#Preview {
-    SectionHeader(title: "Applications", subtitle: "12 apps · 3.8 GB reclaimable") {
-        StatusBadge(title: "Ready", style: .success)
-    }
-    .padding(40)
-    .background(AppColors.background)
-}

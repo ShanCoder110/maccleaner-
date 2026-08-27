@@ -76,12 +76,3 @@ struct SecondaryButton: View {
     }
 }
 
-#Preview {
-    HStack(spacing: 12) {
-        SecondaryButton(title: "Cancel") {}
-        SecondaryButton(title: "Reveal", icon: "folder") {}
-        SecondaryButton(title: "Remove", icon: "trash", isDestructive: true) {}
-    }
-    .padding(40)
-    .background(AppColors.background)
-}

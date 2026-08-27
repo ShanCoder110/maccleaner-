@@ -106,12 +106,3 @@ struct PrimaryButton: View {
     }
 }
 
-#Preview {
-    HStack(spacing: 12) {
-        PrimaryButton(title: "Scan Now", icon: "magnifyingglass") {}
-        PrimaryButton(title: "Cleaning…", isLoading: true) {}
-        PrimaryButton(title: "Disabled", isDisabled: true) {}
-    }
-    .padding(40)
-    .background(AppColors.background)
-}

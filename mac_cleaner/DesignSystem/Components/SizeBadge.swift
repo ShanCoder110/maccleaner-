@@ -48,12 +48,3 @@ struct SizeBadge: View {
     }
 }
 
-#Preview {
-    HStack(spacing: 8) {
-        SizeBadge(value: "128 MB")
-        SizeBadge(value: "2.4 GB", emphasis: .prominent)
-        SizeBadge(value: "4.1 GB", emphasis: .accent)
-    }
-    .padding(40)
-    .background(AppColors.background)
-}

@@ -66,14 +66,3 @@ struct SelectionCheckbox: View {
     }
 }
 
-#Preview {
-    @Previewable @State var a = true
-    @Previewable @State var b = false
-    HStack(spacing: 16) {
-        SelectionCheckbox(isSelected: $a)
-        SelectionCheckbox(isSelected: $b)
-        SelectionCheckbox(isSelected: .constant(false), isIndeterminate: true)
-    }
-    .padding(40)
-    .background(AppColors.background)
-}

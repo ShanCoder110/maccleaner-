@@ -66,12 +66,3 @@ struct AppSegmentedControl<T: Hashable>: View {
     }
 }
 
-#Preview {
-    @Previewable @State var tab = "All"
-    AppSegmentedControl(
-        options: [("All", "All"), ("Selected", "Selected"), ("Large", "Large")],
-        selection: $tab
-    )
-    .padding(40)
-    .background(AppColors.background)
-}
