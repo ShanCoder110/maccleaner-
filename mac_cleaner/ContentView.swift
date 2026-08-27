@@ -2,20 +2,33 @@
 //  ContentView.swift
 //  mac_cleaner
 //
-//  Created by m2pro on 22/08/2026.
-//
 
 import SwiftUI
 
 struct ContentView: View {
+    @State private var selection: AppDestination = .smartScan
+
     var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
+        HStack(spacing: 0) {
+            AppSidebar(selection: $selection)
+
+            Group {
+                switch selection {
+                case .smartScan:
+                    SmartScanView()
+                case .applications:
+                    ApplicationsView()
+                case .designSystem:
+                    DesignSystemGalleryView()
+                case .junkFiles, .largeFiles, .duplicates:
+                    PlaceholderDestinationView(destination: selection)
+                }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
-        .padding()
+        .frame(minWidth: 980, minHeight: 640)
+        .background(AppColors.background)
+        .preferredColorScheme(.light)
     }
 }
 

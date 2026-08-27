@@ -2,8 +2,6 @@
 //  mac_cleanerApp.swift
 //  mac_cleaner
 //
-//  Created by m2pro on 22/08/2026.
-//
 
 import SwiftUI
 
@@ -12,6 +10,11 @@ struct mac_cleanerApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+        }
+        .windowStyle(.hiddenTitleBar)
+        .defaultSize(width: 1100, height: 720)
+        .commands {
+            CommandGroup(replacing: .newItem) {}
         }
     }
 }
