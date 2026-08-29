@@ -73,11 +73,23 @@ enum LeftoverSensitivity: String, CaseIterable, Identifiable, Codable {
 
     var id: String { rawValue }
 
+    /// User-facing label (Conservative / Recommended / Include possible).
     var title: String {
         switch self {
-        case .strict: return "Strict"
-        case .enhanced: return "Enhanced"
-        case .deep: return "Deep"
+        case .strict: return "Conservative"
+        case .enhanced: return "Recommended"
+        case .deep: return "Include possible"
+        }
+    }
+
+    var detail: String {
+        switch self {
+        case .strict:
+            return "Show only strongly associated files."
+        case .enhanced:
+            return "Show strong and likely matches. Recommended default."
+        case .deep:
+            return "Also show weaker heuristic matches. They stay unchecked."
         }
     }
 }

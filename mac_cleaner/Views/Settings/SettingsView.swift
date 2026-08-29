@@ -55,9 +55,9 @@ struct SettingsView: View {
     }
 
     private var sensitivityCard: some View {
-        settingsSection(title: "Leftover sensitivity") {
+        settingsSection(title: "Related-file matching") {
             VStack(alignment: .leading, spacing: AppSpacing.md) {
-                Picker("Sensitivity", selection: sensitivityBinding) {
+                Picker("Matching", selection: sensitivityBinding) {
                     ForEach(LeftoverSensitivity.allCases) { value in
                         Text(value.title).tag(value)
                     }
@@ -65,7 +65,7 @@ struct SettingsView: View {
                 .pickerStyle(.segmented)
                 .labelsHidden()
 
-                Text("Controls how aggressively related app files are matched during uninstall.")
+                Text(appState.sensitivity.detail)
                     .font(AppTypography.caption)
                     .foregroundStyle(AppColors.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -76,7 +76,7 @@ struct SettingsView: View {
     private var foldersCard: some View {
         settingsSection(title: "Granted permissions") {
             VStack(alignment: .leading, spacing: AppSpacing.md) {
-                Text("Folder access uses the macOS folder picker. Grant Caches, Logs, or Application Support to enable scanning.")
+                Text("Folder access uses the macOS folder picker. Grant Caches, Logs, or Application Support to enable scanning. Grant Applications to uninstall apps to Trash.")
                     .font(AppTypography.caption)
                     .foregroundStyle(AppColors.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -84,6 +84,9 @@ struct SettingsView: View {
                 HStack(spacing: AppSpacing.sm) {
                     SecondaryButton(title: "Grant Folder Access…", icon: "folder.badge.plus", size: .compact) {
                         appState.showPermissionSetup = true
+                    }
+                    SecondaryButton(title: "Applications", icon: "square.grid.2x2", size: .compact) {
+                        _ = appState.bookmarks.ensurePresetAccess(kind: .applicationsSystem)
                     }
                     SecondaryButton(title: "Add Folder", icon: "plus", size: .compact) {
                         _ = appState.bookmarks.requestFolderAccess(

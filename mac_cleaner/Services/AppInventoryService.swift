@@ -5,6 +5,7 @@
 
 import Foundation
 import AppKit
+import CoreServices
 
 struct AppInventoryService {
     func loadInstalledApps() -> [InstalledApp] {
@@ -41,17 +42,36 @@ struct AppInventoryService {
         let version = bundle?.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "—"
         let isSystem = bundleID.hasPrefix("com.apple.") || url.path.hasPrefix("/System")
 
+        // Capture last-used BEFORE walking the bundle for size (size walk dirties access dates).
+        let lastOpened = Self.bestEffortLastOpened(for: url)
+
         return InstalledApp(
             name: name,
             bundleIdentifier: bundleID,
             path: url,
             version: version,
             isSystemApp: isSystem,
-            byteSize: FileSizeCalculator.size(of: url, maxDepth: 4)
+            byteSize: FileSizeCalculator.size(of: url, maxDepth: 4),
+            lastOpenedDate: lastOpened
         )
     }
 
     func icon(for app: InstalledApp) -> NSImage {
         NSWorkspace.shared.icon(forFile: app.path.path)
+    }
+
+    /// Spotlight last-used date when available; otherwise modification date (never after a size walk).
+    private static func bestEffortLastOpened(for url: URL) -> Date? {
+        let path = url.path as CFString
+        if let item = MDItemCreate(nil, path),
+           let date = MDItemCopyAttribute(item, kMDItemLastUsedDate) as? Date {
+            return date
+        }
+
+        let values = try? url.resourceValues(forKeys: [
+            .contentModificationDateKey,
+            .creationDateKey
+        ])
+        return values?.contentModificationDate ?? values?.creationDate
     }
 }

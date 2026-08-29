@@ -17,18 +17,11 @@ struct CleaningService {
         let unique = Array(Set(urls.map(\.standardizedFileURL)))
         guard !unique.isEmpty else { return result }
 
-        for (index, url) in unique.enumerated() {
-            let fraction = Double(index + 1) / Double(unique.count)
-            await MainActor.run { progress?(fraction) }
+        let prepared = await MainActor.run { prepareScopedURLs(for: unique) }
 
-            guard isAllowed(url) else {
-                let message = "Skipped path outside authorized folders: \(url.path)"
-                result.errors.append(message)
-                await MainActor.run {
-                    log.log(.error, message, path: url.path)
-                }
-                continue
-            }
+        for (index, url) in prepared.enumerated() {
+            let fraction = Double(index + 1) / Double(max(unique.count, 1))
+            await MainActor.run { progress?(fraction) }
 
             let size = FileSizeCalculator.size(of: url)
             do {
@@ -40,37 +33,114 @@ struct CleaningService {
                     log.log(.clean, "Moved to Trash: \(url.lastPathComponent)", path: url.path)
                 }
             } catch {
-                let message = "Could not trash \(url.lastPathComponent): \(error.localizedDescription)"
-                result.errors.append(message)
-                await MainActor.run {
-                    log.log(.error, message, path: url.path)
+                let outcome = await MainActor.run { () -> RetryOutcome in
+                    retryTrash(url: url, size: size, previousError: error)
                 }
+                switch outcome {
+                case .succeeded(let freed):
+                    result.trashedCount += 1
+                    result.freedBytes += freed
+                case .failed(let message):
+                    result.errors.append(message)
+                }
+            }
+        }
+
+        let skipped = unique.count - prepared.count
+        if skipped > 0 {
+            let message = "Skipped \(skipped) item\(skipped == 1 ? "" : "s") without folder permission. Grant Applications or the related folders, then try again."
+            result.errors.append(message)
+            await MainActor.run {
+                log.log(.error, message)
             }
         }
 
         return result
     }
 
-    func isAllowed(_ url: URL) -> Bool {
-        let standardized = url.standardizedFileURL
+    private enum RetryOutcome {
+        case succeeded(Int64)
+        case failed(String)
+    }
 
-        // Resolve symlinks and reject escapes.
-        let resolved = standardized.resolvingSymlinksInPath()
-        if resolved.path != standardized.path && !bookmarks.containsPath(resolved.path) {
-            // Allow .app bundles selected for uninstall even if not under a bookmark.
-            if standardized.pathExtension == "app", isUserApplication(standardized) {
-                return true
+    @MainActor
+    private func retryTrash(url: URL, size: Int64, previousError: Error) -> RetryOutcome {
+        guard let scoped = bookmarks.requestAccessForTrashing(
+            url: url,
+            itemName: url.lastPathComponent
+        ) else {
+            let message = Self.permissionAwareMessage(for: url, error: previousError)
+            log.log(.error, message, path: url.path)
+            return .failed(message)
+        }
+
+        do {
+            var resultingURL: NSURL?
+            try FileManager.default.trashItem(at: scoped, resultingItemURL: &resultingURL)
+            log.log(.clean, "Moved to Trash: \(scoped.lastPathComponent)", path: scoped.path)
+            return .succeeded(size)
+        } catch {
+            let message = Self.permissionAwareMessage(for: scoped, error: error)
+            log.log(.error, message, path: scoped.path)
+            return .failed(message)
+        }
+    }
+
+    /// Resolves security-scoped URLs, prompting for Applications access when needed.
+    @MainActor
+    private func prepareScopedURLs(for urls: [URL]) -> [URL] {
+        let appPaths = urls.filter { $0.pathExtension == "app" }.map(\.path)
+        if !appPaths.isEmpty {
+            _ = bookmarks.ensureApplicationsAccess(forAppPaths: appPaths)
+        }
+
+        var scoped: [URL] = []
+        var promptedParents = Set<String>()
+
+        for url in urls {
+            if let ready = bookmarks.scopedURLForTrashing(url) {
+                scoped.append(ready)
+                continue
             }
-            if !bookmarks.containsPath(standardized.path) {
-                return false
+
+            let parent = url.deletingLastPathComponent().path
+            // Avoid repeated panels for many leftovers under the same missing folder.
+            if promptedParents.contains(parent), bookmarks.scopedURLForTrashing(url) == nil {
+                continue
+            }
+            promptedParents.insert(parent)
+
+            if let granted = bookmarks.requestAccessForTrashing(url: url, itemName: url.lastPathComponent) {
+                scoped.append(granted)
+                // After granting a parent folder, pick up any other pending URLs under it.
+                for other in urls where !scoped.contains(other) {
+                    if let extra = bookmarks.scopedURLForTrashing(other) {
+                        scoped.append(extra)
+                    }
+                }
             }
         }
 
-        if standardized.pathExtension == "app", isUserApplication(standardized) {
+        // De-dupe while preserving order
+        var seen = Set<URL>()
+        return scoped.filter { seen.insert($0).inserted }
+    }
+
+    func isAllowed(_ url: URL) -> Bool {
+        let standardized = url.standardizedFileURL
+        let resolved = standardized.resolvingSymlinksInPath()
+
+        if bookmarks.containsPath(standardized.path) || bookmarks.containsPath(resolved.path) {
             return true
         }
 
-        return bookmarks.containsPath(standardized.path) || bookmarks.containsPath(resolved.path)
+        if standardized.pathExtension == "app", isUserApplication(standardized) {
+            return bookmarks.containsPath(standardized.path)
+                || bookmarks.containsPath("/Applications")
+                || bookmarks.containsPath(BookmarkStore.realUserHomePath() + "/Applications")
+        }
+
+        return false
     }
 
     private func isUserApplication(_ url: URL) -> Bool {
@@ -84,5 +154,18 @@ struct CleaningService {
 
     func reveal(_ url: URL) {
         NSWorkspace.shared.activateFileViewerSelecting([url])
+    }
+
+    private static func permissionAwareMessage(for url: URL, error: Error) -> String {
+        let nsError = error as NSError
+        let base = error.localizedDescription
+        if nsError.domain == NSCocoaErrorDomain,
+           nsError.code == NSFileWriteNoPermissionError || nsError.code == 513 {
+            return "Permission denied for \(url.lastPathComponent). Grant access to the Applications folder (or this item) when prompted, then try again."
+        }
+        if base.localizedCaseInsensitiveContains("permission") {
+            return "Permission denied for \(url.lastPathComponent). Grant the Applications folder when prompted, then retry."
+        }
+        return "Could not trash \(url.lastPathComponent): \(base)"
     }
 }

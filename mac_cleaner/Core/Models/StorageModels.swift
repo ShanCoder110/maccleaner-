@@ -23,6 +23,8 @@ struct GrantedFolder: Identifiable, Hashable, Codable {
         case downloads
         case documents
         case desktop
+        case applicationsSystem
+        case applicationsUser
 
         var title: String {
             switch self {
@@ -36,6 +38,8 @@ struct GrantedFolder: Identifiable, Hashable, Codable {
             case .downloads: return "Downloads"
             case .documents: return "Documents"
             case .desktop: return "Desktop"
+            case .applicationsSystem: return "Applications"
+            case .applicationsUser: return "User Applications"
             }
         }
 
@@ -51,6 +55,7 @@ struct GrantedFolder: Identifiable, Hashable, Codable {
             case .downloads: return "arrow.down.circle"
             case .documents: return "doc"
             case .desktop: return "desktopcomputer"
+            case .applicationsSystem, .applicationsUser: return "square.grid.2x2"
             }
         }
     }
@@ -65,11 +70,22 @@ struct InstalledApp: Identifiable, Hashable {
     let version: String
     let isSystemApp: Bool
     var byteSize: Int64
+    /// Best-effort last opened / last content access date from filesystem metadata.
+    var lastOpenedDate: Date?
     var isSelected: Bool = false
     var isExpanded: Bool = false
 
     var sizeLabel: String {
         ByteFormat.string(from: byteSize)
+    }
+
+    var locationLabel: String {
+        path.deletingLastPathComponent().path
+    }
+
+    var lastOpenedLabel: String? {
+        guard let lastOpenedDate else { return nil }
+        return lastOpenedDate.formatted(date: .abbreviated, time: .omitted)
     }
 }
 
@@ -86,15 +102,15 @@ enum LeftoverKind: String, Codable, CaseIterable {
 
     var title: String {
         switch self {
-        case .appBundle: return "App"
+        case .appBundle: return "Application"
         case .preferences: return "Preferences"
         case .caches: return "Caches"
-        case .applicationSupport: return "Support"
-        case .containers: return "Container"
+        case .applicationSupport: return "Application Support"
+        case .containers: return "Containers"
         case .logs: return "Logs"
-        case .launchAgent: return "Launch Agent"
+        case .launchAgent: return "Launch Agents"
         case .savedState: return "Saved State"
-        case .other: return "Related"
+        case .other: return "Other"
         }
     }
 
@@ -107,6 +123,11 @@ enum LeftoverKind: String, Codable, CaseIterable {
         case .other: return .neutral
         }
     }
+
+    /// Display order in expanded leftover groups.
+    static var displayOrder: [LeftoverKind] {
+        [.appBundle, .applicationSupport, .caches, .preferences, .containers, .logs, .savedState, .launchAgent, .other]
+    }
 }
 
 struct LeftoverItem: Identifiable, Hashable {
@@ -116,25 +137,73 @@ struct LeftoverItem: Identifiable, Hashable {
     var byteSize: Int64
     var isSelected: Bool
     var isSensitive: Bool
+    var matchConfidence: MatchConfidence
+    var matchReason: MatchReason
+    var safety: SafetyClassification
+    var isSharedOrPossiblyShared: Bool
+    var relatedInstalledAppNames: [String]
 
     var displayPath: String { url.path }
     var name: String { url.lastPathComponent }
     var sizeLabel: String { ByteFormat.string(from: byteSize) }
+
+    var whyExplanation: String {
+        matchReason.explanation(appName: relatedInstalledAppNames.first ?? "this app", isShared: isSharedOrPossiblyShared)
+    }
 
     init(
         id: UUID = UUID(),
         url: URL,
         kind: LeftoverKind,
         byteSize: Int64,
-        isSelected: Bool = true,
-        isSensitive: Bool = false
+        isSelected: Bool? = nil,
+        isSensitive: Bool = false,
+        matchConfidence: MatchConfidence = .likely,
+        matchReason: MatchReason = .normalizedName,
+        safety: SafetyClassification? = nil,
+        isSharedOrPossiblyShared: Bool = false,
+        relatedInstalledAppNames: [String] = []
     ) {
         self.id = id
         self.url = url
         self.kind = kind
         self.byteSize = byteSize
-        self.isSelected = isSensitive ? false : isSelected
         self.isSensitive = isSensitive
+        self.matchConfidence = matchConfidence
+        self.matchReason = matchReason
+        let resolvedSafety = safety ?? SafetyClassification.classify(kind: kind, url: url)
+        self.safety = isSensitive ? .sensitive : resolvedSafety
+        self.isSharedOrPossiblyShared = isSharedOrPossiblyShared
+        self.relatedInstalledAppNames = relatedInstalledAppNames
+
+        if let isSelected {
+            self.isSelected = (self.safety == .sensitive || isSharedOrPossiblyShared) ? false : isSelected
+        } else {
+            self.isSelected = LeftoverItem.defaultSelection(
+                kind: kind,
+                confidence: matchConfidence,
+                safety: self.safety,
+                isShared: isSharedOrPossiblyShared
+            )
+        }
+    }
+
+    static func defaultSelection(
+        kind: LeftoverKind,
+        confidence: MatchConfidence,
+        safety: SafetyClassification,
+        isShared: Bool
+    ) -> Bool {
+        if isShared { return false }
+        if safety == .sensitive { return false }
+        if confidence == .possible { return false }
+        if kind == .appBundle { return true }
+        // Auto-select only confirmed/likely + clearly regenerable data.
+        if safety == .safeToRemove, confidence == .confirmed || confidence == .likely {
+            return true
+        }
+        // Review-recommended: only the app bundle (handled above) is auto-selected.
+        return false
     }
 }
 

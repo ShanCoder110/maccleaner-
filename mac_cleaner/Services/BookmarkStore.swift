@@ -9,6 +9,7 @@ import Foundation
 import AppKit
 import Combine
 import Darwin
+import UniformTypeIdentifiers
 
 final class BookmarkStore: ObservableObject {
     @Published private(set) var folders: [GrantedFolder] = []
@@ -104,6 +105,7 @@ final class BookmarkStore: ObservableObject {
         if let existing = folders.first(where: { $0.path == standardized }) {
             bookmarkDataByID[existing.id] = data
             persist()
+            _ = startAccess(for: existing.id)
             return existing
         }
 
@@ -116,6 +118,7 @@ final class BookmarkStore: ObservableObject {
         folders.append(folder)
         bookmarkDataByID[folder.id] = data
         persist()
+        _ = startAccess(for: folder.id)
         return folder
     }
 
@@ -190,8 +193,104 @@ final class BookmarkStore: ObservableObject {
         case .downloads: return (home as NSString).appendingPathComponent("Downloads")
         case .documents: return (home as NSString).appendingPathComponent("Documents")
         case .desktop: return (home as NSString).appendingPathComponent("Desktop")
+        case .applicationsSystem: return "/Applications"
+        case .applicationsUser: return (home as NSString).appendingPathComponent("Applications")
         case .custom: return home
         }
+    }
+
+    /// Returns a path usable for trash when covered by an active security-scoped bookmark.
+    func scopedURLForTrashing(_ url: URL) -> URL? {
+        urlIfAccessible(url.standardizedFileURL.path)
+    }
+
+    private func coversApplicationsSystem() -> Bool {
+        containsPath("/Applications") || folders.contains {
+            ($0.kind == .applicationsSystem || $0.path == "/Applications") && startAccess(for: $0.id) != nil
+        }
+    }
+
+    private func coversApplicationsUser() -> Bool {
+        let homeApps = (Self.realUserHomePath() as NSString).appendingPathComponent("Applications")
+        return containsPath(homeApps) || folders.contains {
+            ($0.kind == .applicationsUser || $0.path == homeApps) && startAccess(for: $0.id) != nil
+        }
+    }
+
+    /// Prompts for `/Applications` and/or `~/Applications` when uninstalling apps there.
+    @discardableResult
+    func ensureApplicationsAccess(forAppPaths appPaths: [String]) -> Bool {
+        let homeApps = (Self.realUserHomePath() as NSString).appendingPathComponent("Applications")
+        var needsSystem = false
+        var needsUser = false
+
+        for path in appPaths {
+            let standardized = (path as NSString).standardizingPath
+            if standardized.hasPrefix("/Applications/") || standardized == "/Applications" {
+                needsSystem = true
+            } else if standardized.hasPrefix(homeApps + "/") || standardized == homeApps {
+                needsUser = true
+            }
+        }
+
+        var ok = true
+
+        if needsSystem, !coversApplicationsSystem() {
+            let granted = requestFolderAccess(
+                message: "To move apps to Trash, grant access to the Applications folder. Select /Applications, then click Grant Access.",
+                suggestedPath: "/Applications",
+                kind: .applicationsSystem
+            )
+            ok = ok && (granted != nil) && coversApplicationsSystem()
+        }
+
+        if needsUser, !coversApplicationsUser() {
+            let granted = requestFolderAccess(
+                message: "To move apps from your user Applications folder to Trash, select ~/Applications, then click Grant Access.",
+                suggestedPath: homeApps,
+                kind: .applicationsUser
+            )
+            ok = ok && (granted != nil) && coversApplicationsUser()
+        }
+
+        return ok
+    }
+
+    /// Prompts for access to a specific item (or its folder) when not yet authorized.
+    @discardableResult
+    func requestAccessForTrashing(url: URL, itemName: String) -> URL? {
+        if let scoped = scopedURLForTrashing(url) {
+            return scoped
+        }
+
+        let panel = NSOpenPanel()
+        panel.canChooseFiles = true
+        panel.canChooseDirectories = true
+        panel.allowsMultipleSelection = false
+        panel.canCreateDirectories = false
+        panel.prompt = "Grant Access"
+        panel.title = "Allow Trash Access"
+        panel.message = "Select “\(itemName)” or its containing folder so MacCleaner+ can move it to Trash. Nothing is deleted permanently."
+        panel.directoryURL = url.deletingLastPathComponent()
+        if url.pathExtension == "app" {
+            panel.allowedContentTypes = [.application, .folder]
+        }
+
+        NSApp.activate(ignoringOtherApps: true)
+        guard panel.runModal() == .OK, let selected = panel.url else { return nil }
+
+        let homeApps = (Self.realUserHomePath() as NSString).appendingPathComponent("Applications")
+        let kind: GrantedFolder.Kind
+        if selected.path == "/Applications" {
+            kind = .applicationsSystem
+        } else if selected.path == homeApps {
+            kind = .applicationsUser
+        } else {
+            kind = .custom
+        }
+
+        guard addFolder(url: selected, kind: kind) != nil else { return nil }
+        return scopedURLForTrashing(url)
     }
 
     private func load() {
@@ -207,7 +306,6 @@ final class BookmarkStore: ObservableObject {
                 }
             }
         }
-        // Drop folders without bookmark data
         folders.removeAll { bookmarkDataByID[$0.id] == nil }
     }
 
