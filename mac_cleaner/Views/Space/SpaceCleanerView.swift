@@ -48,14 +48,8 @@ struct SpaceCleanerView: View {
                 FolderAccessBanner()
 
                 HStack {
-                    SecondaryButton(title: "Grant Caches", size: .compact) {
-                        _ = appState.bookmarks.ensurePresetAccess(kind: .caches)
-                    }
-                    SecondaryButton(title: "Grant Logs", size: .compact) {
-                        _ = appState.bookmarks.ensurePresetAccess(kind: .logs)
-                    }
-                    SecondaryButton(title: "AI Folders", icon: "brain", size: .compact) {
-                        _ = appState.bookmarks.ensurePresetAccess(kind: .homeAI)
+                    SecondaryButton(title: "Manage Permissions", icon: "folder.badge.plus", size: .compact) {
+                        appState.openManagePermissions()
                     }
                     Spacer()
                     SecondaryButton(

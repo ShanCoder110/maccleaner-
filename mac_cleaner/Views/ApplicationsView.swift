@@ -428,17 +428,12 @@ struct ApplicationsView: View {
             }
 
             if !missing.isEmpty {
-                Text("Optional folders that often contain leftovers:")
-                    .font(AppTypography.captionMedium)
+                Text("Authorize more folders (like Application Support or Caches) to find leftovers, then rescan.")
+                    .font(AppTypography.caption)
                     .foregroundStyle(AppColors.textSecondary)
 
-                HStack(spacing: AppSpacing.sm) {
-                    ForEach(missing, id: \.0) { kind, title in
-                        SecondaryButton(title: title, size: .compact) {
-                            _ = appState.bookmarks.ensurePresetAccess(kind: kind)
-                            Task { await loadLeftovers(for: app, force: true) }
-                        }
-                    }
+                SecondaryButton(title: "Manage Permissions", icon: "folder.badge.plus", size: .compact) {
+                    appState.openManagePermissions()
                 }
             }
         }

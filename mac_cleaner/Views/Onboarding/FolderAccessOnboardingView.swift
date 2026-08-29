@@ -15,6 +15,11 @@ struct FolderAccessOnboardingView: View {
         .caches, .logs, .applicationSupport, .preferences, .downloads
     ]
 
+    /// Needed to move apps to Trash (sandbox cannot trash /Applications without a grant).
+    private let appPresets: [GrantedFolder.Kind] = [
+        .applicationsSystem, .applicationsUser
+    ]
+
     var body: some View {
         ZStack {
             AppColors.background.ignoresSafeArea()
@@ -34,7 +39,7 @@ struct FolderAccessOnboardingView: View {
                         .font(AppTypography.title)
                         .foregroundStyle(AppColors.textPrimary)
 
-                    Text("macOS will show a folder picker so you can grant access. MacCleaner+ only scans and cleans inside folders you approve — plus apps you choose to uninstall.")
+                    Text("macOS will show a folder picker so you can grant access. Scan and clean only run in folders you approve. Grant Applications to uninstall apps to Trash.")
                         .font(AppTypography.callout)
                         .foregroundStyle(AppColors.textSecondary)
                         .multilineTextAlignment(.center)
@@ -45,6 +50,12 @@ struct FolderAccessOnboardingView: View {
                     VStack(spacing: AppSpacing.sm) {
                         ForEach(presets, id: \.self) { kind in
                             presetRow(kind)
+                        }
+
+                        Divider().opacity(0.3)
+
+                        ForEach(appPresets, id: \.self) { kind in
+                            presetRow(kind, subtitle: appSubtitle(for: kind))
                         }
 
                         Divider().opacity(0.3)
@@ -65,6 +76,14 @@ struct FolderAccessOnboardingView: View {
                                 icon: "hand.raised.fill"
                             ) {
                                 prompt(for: .caches)
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        } else if !isGranted(.applicationsSystem) {
+                            PrimaryButton(
+                                title: "Grant Applications Access",
+                                icon: "square.grid.2x2"
+                            ) {
+                                prompt(for: .applicationsSystem)
                             }
                             .frame(maxWidth: .infinity, alignment: .leading)
                         }
@@ -102,7 +121,7 @@ struct FolderAccessOnboardingView: View {
         }
     }
 
-    private func presetRow(_ kind: GrantedFolder.Kind) -> some View {
+    private func presetRow(_ kind: GrantedFolder.Kind, subtitle: String? = nil) -> some View {
         let granted = isGranted(kind)
         return HStack(spacing: AppSpacing.md) {
             Image(systemName: kind.systemImage)
@@ -113,10 +132,10 @@ struct FolderAccessOnboardingView: View {
                 Text(kind.title)
                     .font(AppTypography.bodyMedium)
                     .foregroundStyle(AppColors.textPrimary)
-                Text(BookmarkStore.suggestedPath(for: kind) ?? "Choose a folder")
+                Text(subtitle ?? BookmarkStore.suggestedPath(for: kind) ?? "Choose a folder")
                     .font(AppTypography.caption)
                     .foregroundStyle(AppColors.textTertiary)
-                    .lineLimit(1)
+                    .lineLimit(2)
             }
 
             Spacer()
@@ -130,6 +149,18 @@ struct FolderAccessOnboardingView: View {
             }
         }
         .padding(.vertical, AppSpacing.xxs)
+    }
+
+    private func appSubtitle(for kind: GrantedFolder.Kind) -> String {
+        let path = BookmarkStore.suggestedPath(for: kind) ?? kind.title
+        switch kind {
+        case .applicationsSystem:
+            return "\(path) — required to uninstall apps to Trash"
+        case .applicationsUser:
+            return "\(path) — optional, for apps installed in your user folder"
+        default:
+            return path
+        }
     }
 
     private func isGranted(_ kind: GrantedFolder.Kind) -> Bool {
@@ -165,12 +196,8 @@ struct FolderAccessBanner: View {
                         .foregroundStyle(AppColors.textSecondary)
                 }
                 Spacer()
-                SecondaryButton(title: "Grant Access", size: .compact) {
-                    appState.showPermissionSetup = true
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-                        NSApp.activate(ignoringOtherApps: true)
-                        _ = appState.bookmarks.ensurePresetAccess(kind: .caches)
-                    }
+                SecondaryButton(title: "Manage Permissions", size: .compact) {
+                    appState.openManagePermissions()
                 }
             }
             .padding(AppSpacing.md)

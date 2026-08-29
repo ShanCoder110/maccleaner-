@@ -82,18 +82,8 @@ struct SettingsView: View {
                     .fixedSize(horizontal: false, vertical: true)
 
                 HStack(spacing: AppSpacing.sm) {
-                    SecondaryButton(title: "Grant Folder Access…", icon: "folder.badge.plus", size: .compact) {
-                        appState.showPermissionSetup = true
-                    }
-                    SecondaryButton(title: "Applications", icon: "square.grid.2x2", size: .compact) {
-                        _ = appState.bookmarks.ensurePresetAccess(kind: .applicationsSystem)
-                    }
-                    SecondaryButton(title: "Add Folder", icon: "plus", size: .compact) {
-                        _ = appState.bookmarks.requestFolderAccess(
-                            message: "Choose a folder to authorize.",
-                            suggestedPath: BookmarkStore.realUserHomePath(),
-                            kind: .custom
-                        )
+                    SecondaryButton(title: "Manage Permissions…", icon: "folder.badge.plus", size: .compact) {
+                        appState.openManagePermissions()
                     }
                     Spacer(minLength: 0)
                 }

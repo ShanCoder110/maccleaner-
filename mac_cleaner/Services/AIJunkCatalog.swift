@@ -33,7 +33,7 @@ enum AIJunkCatalog {
         Entry(title: "Codex Config", relativePath: ".codex/config.toml", category: "Codex", isSensitive: true, defaultSelected: false),
 
         // Claude
-        Entry(title: "Claude Application Support", relativePath: "Library/Application Support/Claude", category: "Claude", isSensitive: false, defaultSelected: true),
+        Entry(title: "Claude Application Support", relativePath: "Library/Application Support/Claude", category: "Claude", isSensitive: false, defaultSelected: false),
         Entry(title: "Claude Caches", relativePath: "Library/Caches/com.anthropic.claudefordesktop", category: "Claude", isSensitive: false, defaultSelected: true),
         Entry(title: "Claude Code Home", relativePath: ".claude", category: "Claude", isSensitive: true, defaultSelected: false),
 

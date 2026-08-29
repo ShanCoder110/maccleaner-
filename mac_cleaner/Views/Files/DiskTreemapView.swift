@@ -30,6 +30,9 @@ struct DiskTreemapView: View {
                 FolderAccessBanner()
 
                 HStack {
+                    SecondaryButton(title: "Manage Permissions", icon: "folder.badge.plus", size: .compact) {
+                        appState.openManagePermissions()
+                    }
                     SecondaryButton(title: "Choose Folder", icon: "folder", size: .compact) {
                         chooseFolder()
                     }

@@ -248,9 +248,14 @@ struct DuplicateGroup: Identifiable, Hashable {
     var keepID: UUID?
 
     var sizeLabel: String { ByteFormat.string(from: byteSize) }
+
+    /// Bytes reclaimable if one copy is kept.
+    var recoverableBytes: Int64 {
+        byteSize * Int64(max(0, files.count - 1))
+    }
+
     var reclaimableLabel: String {
-        let reclaim = byteSize * Int64(max(0, files.count - 1))
-        return ByteFormat.string(from: reclaim)
+        ByteFormat.string(from: recoverableBytes)
     }
 
     init(id: UUID = UUID(), byteSize: Int64, files: [StorageItem]) {
@@ -297,11 +302,42 @@ struct SmartScanCategoryResult: Identifiable, Hashable {
     let title: String
     let systemImage: String
     var totalBytes: Int64
+    var recoverableBytes: Int64
     var itemCount: Int
     var progress: Double
     var destination: AppDestination?
+    var safety: SmartScanCategorySafety
+    var explanation: String
+    var statusDetail: String?
 
     var sizeLabel: String { ByteFormat.string(from: totalBytes) }
+    var recoverableLabel: String { ByteFormat.string(from: recoverableBytes) }
+
+    init(
+        id: String,
+        title: String,
+        systemImage: String,
+        totalBytes: Int64,
+        recoverableBytes: Int64? = nil,
+        itemCount: Int,
+        progress: Double,
+        destination: AppDestination?,
+        safety: SmartScanCategorySafety = .review,
+        explanation: String = "",
+        statusDetail: String? = nil
+    ) {
+        self.id = id
+        self.title = title
+        self.systemImage = systemImage
+        self.totalBytes = totalBytes
+        self.recoverableBytes = recoverableBytes ?? totalBytes
+        self.itemCount = itemCount
+        self.progress = progress
+        self.destination = destination
+        self.safety = safety
+        self.explanation = explanation
+        self.statusDetail = statusDetail
+    }
 }
 
 enum ActivityKind: String, Codable {

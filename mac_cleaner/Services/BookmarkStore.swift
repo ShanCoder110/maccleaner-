@@ -167,8 +167,17 @@ final class BookmarkStore: ObservableObject {
                 kind: kind
             )
         }
+        let message: String
+        switch kind {
+        case .applicationsSystem:
+            message = "To uninstall apps to Trash, select /Applications, then click Grant Access."
+        case .applicationsUser:
+            message = "To uninstall apps from your user Applications folder, select ~/Applications, then click Grant Access."
+        default:
+            message = "Grant access to \(kind.title) so the app can scan files you choose to manage."
+        }
         return requestFolderAccess(
-            message: "Grant access to \(kind.title) so the app can scan files you choose to manage.",
+            message: message,
             suggestedPath: path,
             kind: kind
         )

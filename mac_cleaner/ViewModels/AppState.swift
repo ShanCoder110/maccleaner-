@@ -22,12 +22,13 @@ final class AppState: ObservableObject {
         didSet { UserDefaults.standard.set(appearanceMode.rawValue, forKey: "mas.appearanceMode") }
     }
 
+    /// First-run only. After this, use `showManagePermissions` for permission changes.
     @Published var hasCompletedOnboarding: Bool {
         didSet { UserDefaults.standard.set(hasCompletedOnboarding, forKey: "mas.onboardingComplete") }
     }
 
-    /// Re-open the folder permission UI from Settings / menu.
-    @Published var showPermissionSetup: Bool = false
+    /// In-app folder permission sheet (Settings, Smart Scan “Manage Permissions”, menu).
+    @Published var showManagePermissions: Bool = false
     @Published var showPaywall: Bool = false
     @Published var pendingProDestination: AppDestination?
 
@@ -64,20 +65,11 @@ final class AppState: ObservableObject {
 
         hasCompletedOnboarding = UserDefaults.standard.bool(forKey: "mas.onboardingComplete")
 
-        // One-time migration: force the permission onboarding UI after the launch-fix update.
-        let flowVersion = 2
+        // One-time migration: re-show first-run onboarding when the grant list changes.
+        let flowVersion = 3
         if UserDefaults.standard.integer(forKey: "mas.permissionFlowVersion") < flowVersion {
             UserDefaults.standard.set(flowVersion, forKey: "mas.permissionFlowVersion")
             hasCompletedOnboarding = false
-            showPermissionSetup = true
-        }
-
-        // If the user has never granted folders, show permission setup on launch.
-        if !bookmarks.hasAnyAccess {
-            showPermissionSetup = true
-            if !hasCompletedOnboarding {
-                hasCompletedOnboarding = false
-            }
         }
 
         bookmarks.objectWillChange
@@ -85,6 +77,7 @@ final class AppState: ObservableObject {
             .sink { [weak self] _ in
                 DispatchQueue.main.async {
                     self?.objectWillChange.send()
+                    self?.scanSession.markStale()
                 }
             }
             .store(in: &cancellables)
@@ -163,8 +156,12 @@ final class AppState: ObservableObject {
     }
 
     func markOnboardingComplete() {
-        showPermissionSetup = false
         hasCompletedOnboarding = true
+        showManagePermissions = false
+    }
+
+    func openManagePermissions() {
+        showManagePermissions = true
     }
 
     func setSensitivity(_ value: LeftoverSensitivity) {
@@ -181,7 +178,7 @@ final class AppState: ObservableObject {
     #if DEBUG
     func resetOnboardingForDebug() {
         hasCompletedOnboarding = false
-        showPermissionSetup = true
+        showManagePermissions = false
         UserDefaults.standard.set(false, forKey: "mas.onboardingComplete")
     }
     #endif

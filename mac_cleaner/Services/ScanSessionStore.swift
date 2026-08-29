@@ -14,37 +14,45 @@ final class ScanSessionStore: ObservableObject {
     @Published var progressPercent: Int = 0
     @Published var progressLabel = "Ready to scan"
     @Published var lastScanDate: Date?
+    @Published var resultsMayBeStale = false
 
     @Published var categorySummaries: [SmartScanCategoryResult] = []
+    @Published var summary: SmartScanSummary = .empty
+    @Published var scanStages: [SmartScanStage] = SmartScanStageID.allCases.map {
+        SmartScanStage(id: $0, status: .pending, detail: nil)
+    }
+
     @Published var spaceCategories: [SpaceCategory] = []
     @Published var largeFiles: [StorageItem] = []
     @Published var duplicateGroups: [DuplicateGroup] = []
     @Published var orphanItems: [LeftoverItem] = []
     @Published var applicationCount = 0
     @Published var applicationsBytes: Int64 = 0
+    @Published var coverageTitles: [String] = []
+    @Published var scannerWarnings: [String] = []
 
     var hasResults: Bool {
         lastScanDate != nil
     }
 
-    /// Junk = selected Space Cleaner items (safe defaults already selected).
+    /// Junk = selected, non-sensitive Space Cleaner items (safe defaults).
     var junkBytes: Int64 {
         spaceCategories
             .flatMap(\.items)
-            .filter(\.isSelected)
+            .filter { $0.isSelected && !$0.isSensitive }
             .reduce(0) { $0 + $1.byteSize }
     }
 
     var junkItemCount: Int {
-        spaceCategories.flatMap(\.items).filter(\.isSelected).count
+        spaceCategories.flatMap(\.items).filter { $0.isSelected && !$0.isSensitive }.count
     }
 
     var junkURLs: [URL] {
-        spaceCategories.flatMap(\.items).filter(\.isSelected).map(\.url)
+        spaceCategories.flatMap(\.items).filter { $0.isSelected && !$0.isSensitive }.map(\.url)
     }
 
     var totalFoundBytes: Int64 {
-        categorySummaries.reduce(0) { $0 + $1.totalBytes }
+        summary.totalDiscoveredSize
     }
 
     func updateProgress(_ value: Double, label: String) {
@@ -54,25 +62,47 @@ final class ScanSessionStore: ObservableObject {
         progressLabel = label
     }
 
+    func resetStages() {
+        scanStages = SmartScanStageID.allCases.map {
+            SmartScanStage(id: $0, status: .pending, detail: nil)
+        }
+    }
+
+    func setStage(_ id: SmartScanStageID, status: SmartScanStageStatus, detail: String? = nil) {
+        guard let index = scanStages.firstIndex(where: { $0.id == id }) else { return }
+        scanStages[index].status = status
+        scanStages[index].detail = detail
+    }
+
     func apply(
-        summaries: [SmartScanCategoryResult],
         space: [SpaceCategory],
         large: [StorageItem],
         dupes: [DuplicateGroup],
         orphans: [LeftoverItem],
         appCount: Int,
-        appBytes: Int64
+        appBytes: Int64,
+        coverageTitles: [String],
+        warnings: [String]
     ) {
-        categorySummaries = summaries
         spaceCategories = space
         largeFiles = large
         duplicateGroups = dupes
         orphanItems = orphans
         applicationCount = appCount
         applicationsBytes = appBytes
+        self.coverageTitles = coverageTitles
+        scannerWarnings = warnings
         lastScanDate = Date()
+        resultsMayBeStale = false
         isScanning = false
         updateProgress(1, label: "Scan complete")
+        rebuildSummaries()
+    }
+
+    func markStale() {
+        guard hasResults else { return }
+        resultsMayBeStale = true
+        rebuildSummaries()
     }
 
     func clearAfterClean(removedURLs: Set<URL>) {
@@ -90,65 +120,25 @@ final class ScanSessionStore: ObservableObject {
 
         orphanItems.removeAll { removedURLs.contains($0.url) }
 
+        resultsMayBeStale = true
         rebuildSummaries()
     }
 
     func rebuildSummaries() {
-        let spaceBytes = spaceCategories.reduce(Int64(0)) { $0 + $1.totalBytes }
-        let spaceCount = spaceCategories.reduce(0) { $0 + $1.items.count }
-        let largeBytes = largeFiles.reduce(Int64(0)) { $0 + $1.byteSize }
-        let dupeBytes = duplicateGroups.reduce(Int64(0)) { partial, group in
-            partial + (group.byteSize * Int64(max(0, group.files.count - 1)))
-        }
-        let orphanBytes = orphanItems.reduce(Int64(0)) { $0 + $1.byteSize }
-
-        categorySummaries = [
-            SmartScanCategoryResult(
-                id: "space",
-                title: "Space Cleaner",
-                systemImage: "internaldrive",
-                totalBytes: spaceBytes,
-                itemCount: spaceCount,
-                progress: spaceBytes == 0 ? 0.05 : min(1, Double(spaceBytes) / Double(max(spaceBytes, 1))),
-                destination: .spaceCleaner
-            ),
-            SmartScanCategoryResult(
-                id: "large",
-                title: "Large Files",
-                systemImage: "doc.on.doc",
-                totalBytes: largeBytes,
-                itemCount: largeFiles.count,
-                progress: largeFiles.isEmpty ? 0.05 : 0.7,
-                destination: .largeFiles
-            ),
-            SmartScanCategoryResult(
-                id: "dupes",
-                title: "Duplicates",
-                systemImage: "rectangle.on.rectangle",
-                totalBytes: dupeBytes,
-                itemCount: duplicateGroups.count,
-                progress: duplicateGroups.isEmpty ? 0.05 : 0.55,
-                destination: .duplicates
-            ),
-            SmartScanCategoryResult(
-                id: "orphans",
-                title: "Orphans",
-                systemImage: "tray",
-                totalBytes: orphanBytes,
-                itemCount: orphanItems.count,
-                progress: orphanItems.isEmpty ? 0.05 : 0.5,
-                destination: .orphans
-            ),
-            SmartScanCategoryResult(
-                id: "apps",
-                title: "Applications",
-                systemImage: "square.grid.2x2",
-                totalBytes: applicationsBytes,
-                itemCount: applicationCount,
-                progress: 0.4,
-                destination: .applications
-            ),
-        ]
+        let built = SmartScanAggregator.build(
+            space: spaceCategories,
+            large: largeFiles,
+            dupes: duplicateGroups,
+            orphans: orphanItems,
+            appCount: applicationCount,
+            appBytes: applicationsBytes,
+            coverageTitles: coverageTitles,
+            warnings: scannerWarnings,
+            lastScanDate: lastScanDate,
+            resultsMayBeStale: resultsMayBeStale
+        )
+        categorySummaries = built.summaries
+        summary = built.summary
     }
 }
 
@@ -158,136 +148,145 @@ enum SmartScanRunner {
         session: ScanSessionStore,
         onProgress: @escaping @MainActor (Double, String) -> Void
     ) async {
-        await MainActor.run {
-            session.isScanning = true
-            session.updateProgress(0.02, label: "Starting scan…")
-        }
-
+        let coverage = await MainActor.run { bookmarks.folders.map(\.kind.title).sorted() }
         let roots = await MainActor.run { bookmarks.accessibleRootURLs }
 
-        await MainActor.run { onProgress(0.08, "Scanning caches & logs…") }
+        await MainActor.run {
+            session.isScanning = true
+            session.resultsMayBeStale = false
+            session.scannerWarnings = []
+            session.coverageTitles = coverage
+            session.resetStages()
+            session.updateProgress(0.02, label: "Starting scan…")
+            onProgress(0.02, "Starting scan…")
+        }
 
-        let space = await Task.detached(priority: .userInitiated) {
+        var warnings: [String] = []
+        var space: [SpaceCategory] = []
+        var large: [StorageItem] = []
+        var dupes: [DuplicateGroup] = []
+        var orphans: [LeftoverItem] = []
+        var apps: [InstalledApp] = []
+
+        // 1. Caches & logs
+        await MainActor.run {
+            session.setStage(.cachesLogs, status: .running)
+            onProgress(0.08, "Scanning caches & logs…")
+            session.updateProgress(0.08, label: "Scanning caches & logs…")
+        }
+        space = await Task.detached(priority: .userInitiated) {
             SpaceCleanerScanner(bookmarks: bookmarks).scan()
         }.value
+        await MainActor.run {
+            let bytes = space.reduce(Int64(0)) { $0 + $1.totalBytes }
+            session.setStage(.cachesLogs, status: .completed, detail: ByteFormat.string(from: bytes))
+        }
 
-        await MainActor.run { onProgress(0.24, "Finding large files…") }
-
-        let large = await Task.detached(priority: .userInitiated) {
-            LargeFilesScanner(minimumBytes: 50 * 1024 * 1024).scan(roots: roots)
-        }.value
-
-        await MainActor.run { onProgress(0.42, "Comparing duplicates…") }
-
-        let dupes = await Task.detached(priority: .userInitiated) {
-            DuplicateFinder().findDuplicates(roots: roots)
-        }.value
-
-        await MainActor.run { onProgress(0.60, "Listing applications…") }
-
-        let apps = await Task.detached(priority: .userInitiated) {
-            AppInventoryService().loadInstalledApps().filter { !$0.isSystemApp }
-        }.value
-
-        await MainActor.run { onProgress(0.74, "Looking for orphans…") }
-
-        let orphans = await Task.detached(priority: .userInitiated) {
-            OrphanScanner(bookmarks: bookmarks).scan(installedApps: apps)
-        }.value
-
-        await MainActor.run { onProgress(0.88, "Checking AI tool data…") }
-
-        let ai = await Task.detached(priority: .userInitiated) {
-            AIJunkCatalog.scan(bookmarks: bookmarks)
-        }.value
-
-        var mergedSpace = space
-        if !ai.isEmpty {
-            if let idx = mergedSpace.firstIndex(where: { $0.id == "ai" }) {
-                mergedSpace[idx].items = ai
-            } else {
-                mergedSpace.append(
-                    SpaceCategory(
-                        id: "ai",
-                        title: "AI Tool Data",
-                        subtitle: "Claude, Codex, Cursor, and related caches",
-                        systemImage: "brain",
-                        items: ai,
-                        isExpanded: true
-                    )
-                )
+        // 2. Large files
+        await MainActor.run {
+            session.setStage(.largeFiles, status: .running)
+            onProgress(0.24, "Finding large files…")
+            session.updateProgress(0.24, label: "Finding large files…")
+        }
+        if roots.isEmpty {
+            await MainActor.run { session.setStage(.largeFiles, status: .skipped, detail: "No folders") }
+            warnings.append("Large files limited — authorize folders to scan")
+        } else {
+            large = await Task.detached(priority: .userInitiated) {
+                LargeFilesScanner(minimumBytes: 50 * 1024 * 1024).scan(roots: roots)
+            }.value
+            await MainActor.run {
+                let bytes = large.reduce(Int64(0)) { $0 + $1.byteSize }
+                session.setStage(.largeFiles, status: .completed, detail: ByteFormat.string(from: bytes))
             }
         }
 
+        // 3. Duplicates
+        await MainActor.run {
+            session.setStage(.duplicates, status: .running)
+            onProgress(0.42, "Comparing duplicates…")
+            session.updateProgress(0.42, label: "Comparing duplicates…")
+        }
+        if roots.isEmpty {
+            await MainActor.run { session.setStage(.duplicates, status: .skipped, detail: "No folders") }
+        } else {
+            dupes = await Task.detached(priority: .userInitiated) {
+                DuplicateFinder().findDuplicates(roots: roots)
+            }.value
+            await MainActor.run {
+                let bytes = dupes.reduce(Int64(0)) { $0 + $1.recoverableBytes }
+                session.setStage(.duplicates, status: .completed, detail: ByteFormat.string(from: bytes))
+            }
+        }
+
+        // 4. Applications
+        await MainActor.run {
+            session.setStage(.applications, status: .running)
+            onProgress(0.60, "Listing applications…")
+            session.updateProgress(0.60, label: "Listing applications…")
+        }
+        apps = await Task.detached(priority: .userInitiated) {
+            AppInventoryService().loadInstalledApps().filter { !$0.isSystemApp }
+        }.value
+        await MainActor.run {
+            session.setStage(.applications, status: .completed, detail: "\(apps.count) apps")
+        }
+
+        // 5. Orphans
+        await MainActor.run {
+            session.setStage(.orphans, status: .running)
+            onProgress(0.74, "Looking for leftovers…")
+            session.updateProgress(0.74, label: "Looking for leftovers…")
+        }
+        if roots.isEmpty {
+            await MainActor.run { session.setStage(.orphans, status: .skipped, detail: "No folders") }
+        } else {
+            let installed = apps
+            orphans = await Task.detached(priority: .userInitiated) {
+                OrphanScanner(bookmarks: bookmarks).scan(installedApps: installed)
+            }.value
+            await MainActor.run {
+                let bytes = orphans.reduce(Int64(0)) { $0 + $1.byteSize }
+                session.setStage(.orphans, status: .completed, detail: ByteFormat.string(from: bytes))
+            }
+        }
+
+        // 6. AI tool data (already included by SpaceCleanerScanner — report stage only)
+        await MainActor.run {
+            session.setStage(.aiData, status: .running)
+            onProgress(0.88, "Checking AI tool data…")
+            session.updateProgress(0.88, label: "Checking AI tool data…")
+        }
+        let aiCategory = space.first(where: { $0.id == "ai" })
+        let aiBytes = aiCategory?.totalBytes ?? 0
+        let aiFound = !(aiCategory?.items.isEmpty ?? true)
+        await MainActor.run {
+            session.setStage(
+                .aiData,
+                status: aiFound ? .completed : .skipped,
+                detail: aiFound ? ByteFormat.string(from: aiBytes) : "None found"
+            )
+        }
+
+        var mergedSpace = space
         for i in mergedSpace.indices {
             mergedSpace[i].isExpanded = mergedSpace[i].id == "ai" || mergedSpace.count <= 3
         }
 
-        let spaceBytes = mergedSpace.reduce(Int64(0)) { $0 + $1.totalBytes }
-        let spaceCount = mergedSpace.reduce(0) { $0 + $1.items.count }
-        let largeBytes = large.reduce(Int64(0)) { $0 + $1.byteSize }
-        let dupeBytes = dupes.reduce(Int64(0)) { $0 + ($1.byteSize * Int64(max(0, $1.files.count - 1))) }
-        let orphanBytes = orphans.reduce(Int64(0)) { $0 + $1.byteSize }
-        let appBytes = apps.prefix(20).reduce(Int64(0)) { $0 + $1.byteSize }
-
-        let summaries = [
-            SmartScanCategoryResult(
-                id: "space",
-                title: "Space Cleaner",
-                systemImage: "internaldrive",
-                totalBytes: spaceBytes,
-                itemCount: spaceCount,
-                progress: spaceBytes == 0 ? 0.05 : 0.85,
-                destination: .spaceCleaner
-            ),
-            SmartScanCategoryResult(
-                id: "large",
-                title: "Large Files",
-                systemImage: "doc.on.doc",
-                totalBytes: largeBytes,
-                itemCount: large.count,
-                progress: large.isEmpty ? 0.05 : 0.7,
-                destination: .largeFiles
-            ),
-            SmartScanCategoryResult(
-                id: "dupes",
-                title: "Duplicates",
-                systemImage: "rectangle.on.rectangle",
-                totalBytes: dupeBytes,
-                itemCount: dupes.count,
-                progress: dupes.isEmpty ? 0.05 : 0.55,
-                destination: .duplicates
-            ),
-            SmartScanCategoryResult(
-                id: "orphans",
-                title: "Orphans",
-                systemImage: "tray",
-                totalBytes: orphanBytes,
-                itemCount: orphans.count,
-                progress: orphans.isEmpty ? 0.05 : 0.5,
-                destination: .orphans
-            ),
-            SmartScanCategoryResult(
-                id: "apps",
-                title: "Applications",
-                systemImage: "square.grid.2x2",
-                totalBytes: appBytes,
-                itemCount: apps.count,
-                progress: 0.4,
-                destination: .applications
-            ),
-        ]
+        // App bytes are inventory only — full list size estimate, not “recoverable”.
+        let appBytes = apps.reduce(Int64(0)) { $0 + $1.byteSize }
 
         await MainActor.run {
             onProgress(1.0, "Scan complete")
             session.apply(
-                summaries: summaries,
                 space: mergedSpace,
                 large: large,
                 dupes: dupes,
                 orphans: orphans,
                 appCount: apps.count,
-                appBytes: appBytes
+                appBytes: appBytes,
+                coverageTitles: coverage,
+                warnings: warnings
             )
         }
     }

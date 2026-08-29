@@ -144,25 +144,32 @@ struct AppSidebar: View {
     }
 
     private var diskFooter: some View {
-        AppCard(padding: AppSpacing.md, radius: AppRadius.xl, showShadow: false) {
-            VStack(alignment: .leading, spacing: AppSpacing.sm) {
-                HStack {
-                    Text("Folders")
+        Button {
+            appState.openManagePermissions()
+        } label: {
+            AppCard(padding: AppSpacing.md, radius: AppRadius.xl, showShadow: false) {
+                VStack(alignment: .leading, spacing: AppSpacing.sm) {
+                    HStack {
+                        Text("Folders")
+                            .font(AppTypography.caption)
+                            .foregroundStyle(AppColors.textTertiary)
+                        Spacer()
+                        SizeBadge(
+                            value: "\(appState.bookmarks.folders.count)",
+                            emphasis: appState.bookmarks.hasAnyAccess ? .accent : .regular
+                        )
+                    }
+
+                    AppProgressBar(progress: appState.diskUsage, height: 5)
+
+                    Text(appState.bookmarks.hasAnyAccess
+                         ? "\(appState.diskFreeLabel) free · Permissions"
+                         : "\(appState.diskFreeLabel) free · Grant permissions")
                         .font(AppTypography.caption)
                         .foregroundStyle(AppColors.textTertiary)
-                    Spacer()
-                    SizeBadge(
-                        value: "\(appState.bookmarks.folders.count)",
-                        emphasis: appState.bookmarks.hasAnyAccess ? .accent : .regular
-                    )
                 }
-
-                AppProgressBar(progress: appState.diskUsage, height: 5)
-
-                Text("\(appState.diskFreeLabel) free on disk")
-                    .font(AppTypography.caption)
-                    .foregroundStyle(AppColors.textTertiary)
             }
         }
+        .buttonStyle(.plain)
     }
 }

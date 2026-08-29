@@ -41,8 +41,8 @@ struct mac_cleanerApp: App {
                 }
                 .keyboardShortcut("2", modifiers: .command)
 
-                Button("Grant Folder Access…") {
-                    appState.showPermissionSetup = true
+                Button("Manage Permissions…") {
+                    appState.openManagePermissions()
                 }
                 .keyboardShortcut("g", modifiers: [.command, .shift])
             }
@@ -56,8 +56,12 @@ struct RootView: View {
 
     var body: some View {
         Group {
-            if appState.hasCompletedOnboarding && !appState.showPermissionSetup {
+            if appState.hasCompletedOnboarding {
                 ContentView()
+                    .sheet(isPresented: $appState.showManagePermissions) {
+                        ManagePermissionsView()
+                            .environmentObject(appState)
+                    }
             } else {
                 FolderAccessOnboardingView()
             }

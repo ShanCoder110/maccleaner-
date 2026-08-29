@@ -50,6 +50,9 @@ struct OrphansView: View {
                 FolderAccessBanner()
 
                 HStack {
+                    SecondaryButton(title: "Manage Permissions", icon: "folder.badge.plus", size: .compact) {
+                        appState.openManagePermissions()
+                    }
                     Text(statusLine)
                         .font(AppTypography.callout)
                         .foregroundStyle(AppColors.textSecondary)
