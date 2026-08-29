@@ -43,7 +43,7 @@ struct ContentView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .frame(minWidth: 980, minHeight: 640)
-        .background(AppColors.background)
+        .background(AppColors.background.ignoresSafeArea())
         .sheet(isPresented: $appState.showPaywall) {
             PaywallView()
                 .environmentObject(appState)

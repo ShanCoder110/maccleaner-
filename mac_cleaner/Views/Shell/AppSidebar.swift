@@ -14,7 +14,8 @@ struct AppSidebar: View {
         VStack(alignment: .leading, spacing: 0) {
             brandHeader
                 .padding(.horizontal, AppSpacing.md)
-                .padding(.top, AppSpacing.lg)
+                // Clearance for traffic lights when the title bar is transparent.
+                .padding(.top, AppSpacing.xxxl)
                 .padding(.bottom, AppSpacing.md)
 
             ScrollView(showsIndicators: false) {
@@ -60,11 +61,13 @@ struct AppSidebar: View {
         }
         .frame(width: AppSpacing.sidebarWidth)
         .frame(maxHeight: .infinity)
-        .background(AppColors.sidebarBackground)
+        // Extend under the transparent title bar so the top matches the theme.
+        .background(AppColors.sidebarBackground.ignoresSafeArea(edges: .top))
         .overlay(alignment: .trailing) {
             Rectangle()
                 .fill(AppColors.border)
                 .frame(width: 1)
+                .ignoresSafeArea(edges: .top)
         }
         .onAppear {
             DispatchQueue.main.async {

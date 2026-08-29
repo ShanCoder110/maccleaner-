@@ -23,6 +23,8 @@ struct mac_cleanerApp: App {
                     }
                 }
         }
+        // Let sidebar/content paint to the top edge (traffic lights stay).
+        .windowStyle(.hiddenTitleBar)
         .defaultSize(width: 1100, height: 720)
         .commands {
             CommandGroup(replacing: .newItem) {}
@@ -60,7 +62,10 @@ struct RootView: View {
                 FolderAccessOnboardingView()
             }
         }
-        .background(AppColors.background)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(AppColors.background.ignoresSafeArea())
+        .background(WindowChromeConfigurator(background: AppColors.background))
+        .themedWindowToolbar()
         .preferredColorScheme(appState.preferredColorScheme)
     }
 }

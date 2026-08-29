@@ -35,6 +35,8 @@ struct ContentToolbar: View {
         }
         .padding(.horizontal, AppSpacing.contentInset)
         .padding(.vertical, AppSpacing.lg)
+        .frame(maxWidth: .infinity)
+        .background(AppColors.background)
         .overlay(alignment: .bottom) {
             Rectangle()
                 .fill(AppColors.borderSubtle)
