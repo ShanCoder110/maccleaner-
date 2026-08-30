@@ -5,7 +5,7 @@
 
 import Foundation
 
-enum PathNormalization {
+enum PathNormalization: Sendable {
     static func normalizedForMatching(_ value: String) -> String {
         value
             .folding(options: [.diacriticInsensitive, .caseInsensitive], locale: .current)

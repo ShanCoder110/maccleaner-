@@ -46,7 +46,7 @@ struct ContentView: View {
         .background(AppColors.background.ignoresSafeArea())
         .sheet(isPresented: $appState.showPaywall) {
             PaywallView()
-                .environmentObject(appState)
+                .installAppStores(from: appState)
         }
     }
 }

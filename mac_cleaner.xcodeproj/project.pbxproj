@@ -6,8 +6,19 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXContainerItemProxy section */
+		DBB804C93039B39A00088D1B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = DBB8039A3039B39800088D1B /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = DBB803A13039B39800088D1B;
+			remoteInfo = mac_cleaner;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
 		DBB803A23039B39800088D1B /* MacCleaner+.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "MacCleaner+.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		DBB804C03039B39A00088D1B /* mac_cleanerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = mac_cleanerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -16,10 +27,22 @@
 			path = mac_cleaner;
 			sourceTree = "<group>";
 		};
+		DBB804C13039B39A00088D1B /* mac_cleanerTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = mac_cleanerTests;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		DBB8039F3039B39800088D1B /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		DBB804C23039B39A00088D1B /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -33,6 +56,7 @@
 			isa = PBXGroup;
 			children = (
 				DBB803A43039B39800088D1B /* mac_cleaner */,
+				DBB804C13039B39A00088D1B /* mac_cleanerTests */,
 				DBB803A33039B39800088D1B /* Products */,
 			);
 			sourceTree = "<group>";
@@ -41,6 +65,7 @@
 			isa = PBXGroup;
 			children = (
 				DBB803A23039B39800088D1B /* MacCleaner+.app */,
+				DBB804C03039B39A00088D1B /* mac_cleanerTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -70,6 +95,29 @@
 			productReference = DBB803A23039B39800088D1B /* MacCleaner+.app */;
 			productType = "com.apple.product-type.application";
 		};
+		DBB804C53039B39A00088D1B /* mac_cleanerTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = DBB804C83039B39A00088D1B /* Build configuration list for PBXNativeTarget "mac_cleanerTests" */;
+			buildPhases = (
+				DBB804C33039B39A00088D1B /* Sources */,
+				DBB804C23039B39A00088D1B /* Frameworks */,
+				DBB804C43039B39A00088D1B /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				DBB804CA3039B39A00088D1B /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				DBB804C13039B39A00088D1B /* mac_cleanerTests */,
+			);
+			name = mac_cleanerTests;
+			packageProductDependencies = (
+			);
+			productName = mac_cleanerTests;
+			productReference = DBB804C03039B39A00088D1B /* mac_cleanerTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -82,6 +130,10 @@
 				TargetAttributes = {
 					DBB803A13039B39800088D1B = {
 						CreatedOnToolsVersion = 26.6;
+					};
+					DBB804C53039B39A00088D1B = {
+						CreatedOnToolsVersion = 26.6;
+						TestTargetID = DBB803A13039B39800088D1B;
 					};
 				};
 			};
@@ -100,12 +152,20 @@
 			projectRoot = "";
 			targets = (
 				DBB803A13039B39800088D1B /* mac_cleaner */,
+				DBB804C53039B39A00088D1B /* mac_cleanerTests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		DBB803A03039B39800088D1B /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		DBB804C43039B39A00088D1B /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -122,7 +182,22 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		DBB804C33039B39A00088D1B /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		DBB804CA3039B39A00088D1B /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = DBB803A13039B39800088D1B /* mac_cleaner */;
+			targetProxy = DBB804C93039B39A00088D1B /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		DBB803AB3039B39A00088D1B /* Debug */ = {
@@ -269,6 +344,7 @@
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = shan.maccleaner.plus;
+				PRODUCT_MODULE_NAME = mac_cleaner;
 				PRODUCT_NAME = "MacCleaner+";
 				REGISTER_APP_GROUPS = NO;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -306,6 +382,7 @@
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = shan.maccleaner.plus;
+				PRODUCT_MODULE_NAME = mac_cleaner;
 				PRODUCT_NAME = "MacCleaner+";
 				REGISTER_APP_GROUPS = NO;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -314,6 +391,44 @@
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		DBB804C63039B39A00088D1B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 8W8PR88MAX;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = shan.maccleaner.plus.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/MacCleaner+.app/Contents/MacOS/MacCleaner+";
+			};
+			name = Debug;
+		};
+		DBB804C73039B39A00088D1B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 8W8PR88MAX;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = shan.maccleaner.plus.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/MacCleaner+.app/Contents/MacOS/MacCleaner+";
 			};
 			name = Release;
 		};
@@ -334,6 +449,15 @@
 			buildConfigurations = (
 				DBB803AE3039B39A00088D1B /* Debug */,
 				DBB803AF3039B39A00088D1B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		DBB804C83039B39A00088D1B /* Build configuration list for PBXNativeTarget "mac_cleanerTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				DBB804C63039B39A00088D1B /* Debug */,
+				DBB804C73039B39A00088D1B /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

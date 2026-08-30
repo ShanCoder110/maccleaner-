@@ -7,6 +7,8 @@ import SwiftUI
 
 struct LargeFilesView: View {
     @EnvironmentObject private var appState: AppState
+    @EnvironmentObject private var session: ScanSessionStore
+    @EnvironmentObject private var scanResults: ScanResultsHub
 
     @State private var searchText = ""
     @State private var isCleaning = false
@@ -15,20 +17,20 @@ struct LargeFilesView: View {
     @State private var thresholdMB: Double = 50
     @State private var isRescanning = false
 
-    private var session: ScanSessionStore { appState.scanSession }
+    private var largeFiles: LargeFilesResultsStore { scanResults.largeFiles }
 
     private var itemsBinding: Binding<[StorageItem]> {
         Binding(
-            get: { session.largeFiles },
+            get: { largeFiles.items },
             set: {
-                session.largeFiles = $0
-                session.rebuildSummaries()
+                largeFiles.items = $0
+                appState.rebuildScanSummaries()
             }
         )
     }
 
     private var filteredCount: Int {
-        let items = session.largeFiles
+        let items = largeFiles.items
         guard !searchText.isEmpty else { return items.count }
         return items.filter {
             $0.name.localizedCaseInsensitiveContains(searchText)
@@ -36,7 +38,7 @@ struct LargeFilesView: View {
         }.count
     }
 
-    private var selected: [StorageItem] { session.largeFiles.filter(\.isSelected) }
+    private var selected: [StorageItem] { largeFiles.items.filter(\.isSelected) }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -68,12 +70,18 @@ struct LargeFilesView: View {
 
                     Spacer()
 
-                    SecondaryButton(
-                        title: session.hasResults ? "Rescan" : "Scan",
-                        icon: "magnifyingglass",
-                        size: .compact,
-                        action: rescan
-                    )
+                    if session.isScanning {
+                        SecondaryButton(title: "Cancel", icon: "xmark", size: .compact) {
+                            appState.cancelSmartScan()
+                        }
+                    } else {
+                        SecondaryButton(
+                            title: session.hasResults ? "Rescan" : "Scan",
+                            icon: "magnifyingglass",
+                            size: .compact,
+                            action: rescan
+                        )
+                    }
                     PrimaryButton(
                         title: "Move to Trash",
                         icon: "trash",
@@ -81,6 +89,10 @@ struct LargeFilesView: View {
                         isDisabled: selected.isEmpty,
                         size: .compact
                     ) { confirmClean = true }
+                }
+
+                if let message = largeFiles.incompleteMessage, session.hasResults || !largeFiles.items.isEmpty, !session.isScanning {
+                    incompleteBanner(message)
                 }
 
                 SectionHeader(
@@ -98,7 +110,7 @@ struct LargeFilesView: View {
                 if isRescanning || session.isScanning {
                     ProgressView(session.isScanning ? "\(session.progressPercent)% · \(session.progressLabel)" : "Scanning authorized folders…")
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
-                } else if session.largeFiles.isEmpty {
+                } else if largeFiles.items.isEmpty {
                     EmptyState(
                         title: session.hasResults ? "No large files found" : "No scan yet",
                         message: session.hasResults
@@ -157,24 +169,43 @@ struct LargeFilesView: View {
         }
     }
 
+    private func incompleteBanner(_ message: String) -> some View {
+        HStack(alignment: .top, spacing: AppSpacing.sm) {
+            Image(systemName: "info.circle")
+                .foregroundStyle(AppColors.accent)
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Scan incomplete")
+                    .font(AppTypography.captionMedium)
+                    .foregroundStyle(AppColors.textPrimary)
+                Text(message)
+                    .font(AppTypography.caption)
+                    .foregroundStyle(AppColors.textSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(AppSpacing.md)
+        .background(
+            RoundedRectangle(cornerRadius: AppRadius.lg, style: .continuous)
+                .fill(AppColors.accentMuted)
+        )
+    }
+
     private func rescan() {
         isRescanning = true
         Task {
-            // Category-only large files rescan with current threshold, still updates shared session.
-            let roots = appState.bookmarks.accessibleRootURLs
+            let scope = ScanScope.snapshot(from: appState.bookmarks)
             let minimum = Int64(thresholdMB) * 1024 * 1024
-            let result = await Task.detached(priority: .userInitiated) {
-                LargeFilesScanner(minimumBytes: minimum).scan(roots: roots)
-            }.value
-            await MainActor.run {
-                session.largeFiles = result
-                session.rebuildSummaries()
-                if session.lastScanDate == nil {
-                    session.lastScanDate = Date()
-                }
-                isRescanning = false
-                appState.activityLog.log(.scan, "Large files scan found \(result.count) items")
+            let result = await ScanTask.detached {
+                LargeFilesScanner(minimumBytes: minimum).scan(roots: scope.roots)
             }
+            largeFiles.apply(result)
+            if session.lastScanDate == nil {
+                session.lastScanDate = Date()
+            }
+            appState.rebuildScanSummaries()
+            isRescanning = false
+            appState.activityLog.log(.scan, "Large files scan found \(result.items.count) items")
         }
     }
 
@@ -183,7 +214,7 @@ struct LargeFilesView: View {
         let urls = selected.map(\.url)
         let result = await appState.cleaning.trash(urls: urls)
         let removed = Set(urls.filter { !FileManager.default.fileExists(atPath: $0.path) })
-        session.clearAfterClean(removedURLs: removed)
+        appState.clearScanResultsAfterClean(removedURLs: removed)
         statusMessage = "Moved \(result.trashedCount) files (\(ByteFormat.string(from: result.freedBytes)))."
         isCleaning = false
     }

@@ -7,6 +7,8 @@ import SwiftUI
 
 struct AppSidebar: View {
     @EnvironmentObject private var appState: AppState
+    @EnvironmentObject private var subscription: SubscriptionStore
+    @EnvironmentObject private var bookmarks: BookmarkStore
     @Binding var selection: AppDestination
     var onOpenSettings: () -> Void
 
@@ -26,7 +28,7 @@ struct AppSidebar: View {
                         SidebarItem(
                             title: destination.title,
                             systemImage: destination.systemImage,
-                            badge: destination.requiresPro && !appState.subscription.isPro ? "Pro" : nil,
+                            badge: destination.requiresPro && !subscription.isPro ? "Pro" : nil,
                             isSelected: selection == destination
                         ) {
                             selection = destination
@@ -109,28 +111,28 @@ struct AppSidebar: View {
         AppCard(padding: AppSpacing.md, radius: AppRadius.xl, showShadow: false) {
             VStack(alignment: .leading, spacing: AppSpacing.sm) {
                 HStack(spacing: AppSpacing.xs) {
-                    Image(systemName: appState.subscription.isPro ? "crown.fill" : "sparkles")
+                    Image(systemName: subscription.isPro ? "crown.fill" : "sparkles")
                         .font(.system(size: 12, weight: .semibold))
                         .foregroundStyle(AppColors.accent)
-                    Text(appState.subscription.isPro ? "Pro" : "Upgrade to Pro")
+                    Text(subscription.isPro ? "Pro" : "Upgrade to Pro")
                         .font(AppTypography.bodyMedium)
                         .foregroundStyle(AppColors.textPrimary)
                     Spacer(minLength: 0)
                     StatusBadge(
-                        title: appState.subscription.isPro ? "Active" : "Free",
-                        style: appState.subscription.isPro ? .success : .neutral
+                        title: subscription.isPro ? "Active" : "Free",
+                        style: subscription.isPro ? .success : .neutral
                     )
                 }
 
-                Text(appState.subscription.isPro
-                     ? appState.subscription.statusLabel
+                Text(subscription.isPro
+                     ? subscription.statusLabel
                      : "Unlock Space Cleaner, Large Files, Space Lens & more.")
                     .font(AppTypography.caption)
                     .foregroundStyle(AppColors.textTertiary)
                     .fixedSize(horizontal: false, vertical: true)
                     .lineLimit(3)
 
-                if appState.subscription.isPro {
+                if subscription.isPro {
                     SecondaryButton(title: "Manage", size: .compact) {
                         selection = .settings
                     }
@@ -155,14 +157,14 @@ struct AppSidebar: View {
                             .foregroundStyle(AppColors.textTertiary)
                         Spacer()
                         SizeBadge(
-                            value: "\(appState.bookmarks.folders.count)",
-                            emphasis: appState.bookmarks.hasAnyAccess ? .accent : .regular
+                            value: "\(bookmarks.folders.count)",
+                            emphasis: bookmarks.hasAnyAccess ? .accent : .regular
                         )
                     }
 
                     AppProgressBar(progress: appState.diskUsage, height: 5)
 
-                    Text(appState.bookmarks.hasAnyAccess
+                    Text(bookmarks.hasAnyAccess
                          ? "\(appState.diskFreeLabel) free · Permissions"
                          : "\(appState.diskFreeLabel) free · Grant permissions")
                         .font(AppTypography.caption)

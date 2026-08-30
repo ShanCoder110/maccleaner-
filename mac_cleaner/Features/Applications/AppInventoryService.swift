@@ -7,7 +7,7 @@ import Foundation
 import AppKit
 import CoreServices
 
-struct AppInventoryService {
+struct AppInventoryService: Sendable {
     func loadInstalledApps() -> [InstalledApp] {
         let roots = [
             URL(fileURLWithPath: "/Applications"),
@@ -18,6 +18,7 @@ struct AppInventoryService {
         let fm = FileManager.default
 
         for root in roots {
+            if Task.isCancelled { break }
             guard let contents = try? fm.contentsOfDirectory(
                 at: root,
                 includingPropertiesForKeys: [.isApplicationKey],

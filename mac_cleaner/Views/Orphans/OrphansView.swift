@@ -7,6 +7,8 @@ import SwiftUI
 
 struct OrphansView: View {
     @EnvironmentObject private var appState: AppState
+    @EnvironmentObject private var session: ScanSessionStore
+    @EnvironmentObject private var scanResults: ScanResultsHub
 
     @State private var searchText = ""
     @State private var isCleaning = false
@@ -14,27 +16,27 @@ struct OrphansView: View {
     @State private var statusMessage = ""
     @State private var isRescanning = false
 
-    private var session: ScanSessionStore { appState.scanSession }
+    private var orphans: OrphansResultsStore { scanResults.orphans }
 
     private var itemsBinding: Binding<[LeftoverItem]> {
         Binding(
-            get: { session.orphanItems },
+            get: { orphans.items },
             set: {
-                session.orphanItems = $0
-                session.rebuildSummaries()
+                orphans.items = $0
+                appState.rebuildScanSummaries()
             }
         )
     }
 
     private var filtered: [LeftoverItem] {
-        guard !searchText.isEmpty else { return session.orphanItems }
-        return session.orphanItems.filter {
+        guard !searchText.isEmpty else { return orphans.items }
+        return orphans.items.filter {
             $0.name.localizedCaseInsensitiveContains(searchText)
                 || $0.displayPath.localizedCaseInsensitiveContains(searchText)
         }
     }
 
-    private var selected: [LeftoverItem] { session.orphanItems.filter(\.isSelected) }
+    private var selected: [LeftoverItem] { orphans.items.filter(\.isSelected) }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -57,12 +59,18 @@ struct OrphansView: View {
                         .font(AppTypography.callout)
                         .foregroundStyle(AppColors.textSecondary)
                     Spacer()
-                    SecondaryButton(
-                        title: session.hasResults ? "Rescan" : "Scan",
-                        icon: "magnifyingglass",
-                        size: .compact,
-                        action: rescan
-                    )
+                    if session.isScanning {
+                        SecondaryButton(title: "Cancel", icon: "xmark", size: .compact) {
+                            appState.cancelSmartScan()
+                        }
+                    } else {
+                        SecondaryButton(
+                            title: session.hasResults ? "Rescan" : "Scan",
+                            icon: "magnifyingglass",
+                            size: .compact,
+                            action: rescan
+                        )
+                    }
                     PrimaryButton(
                         title: "Trash Selected",
                         icon: "trash",
@@ -138,7 +146,7 @@ struct OrphansView: View {
     private var statusLine: String {
         if session.isScanning || isRescanning { return "Scanning…" }
         if session.hasResults {
-            return "Caches and logs are selected by default · \(session.orphanItems.count) items from Smart Scan"
+            return "Caches and logs are selected by default · \(orphans.items.count) items from Smart Scan"
         }
         return "Caches and logs are selected by default. Support files need a manual check."
     }
@@ -156,7 +164,7 @@ struct OrphansView: View {
         let urls = selected.map(\.url)
         let result = await appState.cleaning.trash(urls: urls)
         let removed = Set(urls.filter { !FileManager.default.fileExists(atPath: $0.path) })
-        session.clearAfterClean(removedURLs: removed)
+        appState.clearScanResultsAfterClean(removedURLs: removed)
         statusMessage = "Moved \(result.trashedCount) items (\(ByteFormat.string(from: result.freedBytes)))."
         isCleaning = false
     }

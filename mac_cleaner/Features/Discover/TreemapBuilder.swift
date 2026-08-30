@@ -2,24 +2,28 @@
 //  TreemapBuilder.swift
 //  mac_cleaner
 //
+//  Depth-2 children for speed; each node is sized with a full allocated-size walk.
+//
 
 import Foundation
 
-struct TreemapBuilder {
+struct TreemapBuilder: Sendable {
     func build(root: URL, maxChildren: Int = 40, depth: Int = 0, maxDepth: Int = 2) -> TreemapNode {
-        let size = FileSizeCalculator.size(of: root, maxDepth: 6)
+        let size = FileSizeCalculator.size(of: root)
         guard depth < maxDepth else {
             return TreemapNode(name: root.lastPathComponent, url: root, byteSize: size)
         }
 
+        let hidden = HiddenFilePolicy.forGrantedRoot(root)
         let childrenURLs = (try? FileManager.default.contentsOfDirectory(
             at: root,
             includingPropertiesForKeys: [.isDirectoryKey, .isSymbolicLinkKey],
-            options: [.skipsHiddenFiles]
+            options: hidden.enumeratorOptions
         )) ?? []
 
         var childNodes: [TreemapNode] = []
         for url in childrenURLs {
+            if Task.isCancelled { break }
             let values = try? url.resourceValues(forKeys: [.isSymbolicLinkKey])
             if values?.isSymbolicLink == true { continue }
             let node = build(root: url, maxChildren: maxChildren, depth: depth + 1, maxDepth: maxDepth)
@@ -75,7 +79,6 @@ struct TreemapLayout {
                 let candidate = remaining[0]
                 let newRowBytes = rowBytes + max(candidate.byteSize, 1)
                 let rowLength = CGFloat(newRowBytes) / CGFloat(total) * (vertical ? w : h)
-                // Accept first item always
                 if row.isEmpty || worstAspect(row: row + [candidate], side: side, length: rowLength, total: total) <= worstAspect(row: row, side: side, length: CGFloat(rowBytes) / CGFloat(total) * (vertical ? w : h), total: total) + 0.01 {
                     row.append(remaining.removeFirst())
                     rowBytes = newRowBytes
@@ -115,7 +118,7 @@ struct TreemapLayout {
         let rowBytes = row.reduce(Int64(0)) { $0 + max($1.byteSize, 1) }
         var worst: CGFloat = 0
         for node in row {
-            let area = CGFloat(max(node.byteSize, 1)) / CGFloat(total) * (side * length) // approximate
+            let area = CGFloat(max(node.byteSize, 1)) / CGFloat(total) * (side * length)
             let h = area / max(length, 1)
             let aspect = max(length / max(h, 1), max(h, 1) / length)
             worst = max(worst, aspect)

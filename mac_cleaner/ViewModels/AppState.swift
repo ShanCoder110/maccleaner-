@@ -2,6 +2,9 @@
 //  AppState.swift
 //  mac_cleaner
 //
+//  Selection, paywall, onboarding, appearance, and permissions.
+//  Feature stores are observed by views via environment objects.
+//
 
 import Foundation
 import SwiftUI
@@ -12,6 +15,7 @@ final class AppState: ObservableObject {
     let bookmarks: BookmarkStore
     let activityLog: ActivityLogStore
     let scanSession: ScanSessionStore
+    let scanResults: ScanResultsHub
     let subscription: SubscriptionStore
 
     @Published var sensitivity: LeftoverSensitivity {
@@ -22,12 +26,10 @@ final class AppState: ObservableObject {
         didSet { UserDefaults.standard.set(appearanceMode.rawValue, forKey: "mas.appearanceMode") }
     }
 
-    /// First-run only. After this, use `showManagePermissions` for permission changes.
     @Published var hasCompletedOnboarding: Bool {
         didSet { UserDefaults.standard.set(hasCompletedOnboarding, forKey: "mas.onboardingComplete") }
     }
 
-    /// In-app folder permission sheet (Settings, Smart Scan “Manage Permissions”, menu).
     @Published var showManagePermissions: Bool = false
     @Published var showPaywall: Bool = false
     @Published var pendingProDestination: AppDestination?
@@ -37,16 +39,19 @@ final class AppState: ObservableObject {
     @Published private(set) var diskUsage: Double = 0
 
     private var cancellables = Set<AnyCancellable>()
+    private var scanTask: Task<Void, Never>?
 
     init(
         bookmarks: BookmarkStore = BookmarkStore(),
         activityLog: ActivityLogStore = ActivityLogStore(),
         scanSession: ScanSessionStore = ScanSessionStore(),
+        scanResults: ScanResultsHub? = nil,
         subscription: SubscriptionStore = SubscriptionStore()
     ) {
         self.bookmarks = bookmarks
         self.activityLog = activityLog
         self.scanSession = scanSession
+        self.scanResults = scanResults ?? ScanResultsHub()
         self.subscription = subscription
 
         if let raw = UserDefaults.standard.string(forKey: "mas.sensitivity"),
@@ -65,7 +70,6 @@ final class AppState: ObservableObject {
 
         hasCompletedOnboarding = UserDefaults.standard.bool(forKey: "mas.onboardingComplete")
 
-        // One-time migration: re-show first-run onboarding when the grant list changes.
         let flowVersion = 3
         if UserDefaults.standard.integer(forKey: "mas.permissionFlowVersion") < flowVersion {
             UserDefaults.standard.set(flowVersion, forKey: "mas.permissionFlowVersion")
@@ -75,37 +79,7 @@ final class AppState: ObservableObject {
         bookmarks.objectWillChange
             .receive(on: DispatchQueue.main)
             .sink { [weak self] _ in
-                DispatchQueue.main.async {
-                    self?.objectWillChange.send()
-                    self?.scanSession.markStale()
-                }
-            }
-            .store(in: &cancellables)
-
-        activityLog.objectWillChange
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] _ in
-                DispatchQueue.main.async {
-                    self?.objectWillChange.send()
-                }
-            }
-            .store(in: &cancellables)
-
-        scanSession.objectWillChange
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] _ in
-                DispatchQueue.main.async {
-                    self?.objectWillChange.send()
-                }
-            }
-            .store(in: &cancellables)
-
-        subscription.objectWillChange
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] _ in
-                DispatchQueue.main.async {
-                    self?.objectWillChange.send()
-                }
+                self?.markScanStale()
             }
             .store(in: &cancellables)
     }
@@ -148,11 +122,43 @@ final class AppState: ObservableObject {
     func runSmartScan() async {
         guard !scanSession.isScanning else { return }
         activityLog.log(.scan, "Smart Scan started")
-        await SmartScanRunner.run(bookmarks: bookmarks, session: scanSession) { progress, label in
-            self.scanSession.updateProgress(progress, label: label)
+        let scope = ScanScope.snapshot(from: bookmarks)
+        let leftoverSensitivity = sensitivity
+        let session = scanSession
+        let results = scanResults
+        let task = Task {
+            await ScanCoordinator.run(
+                scope: scope,
+                session: session,
+                results: results,
+                leftoverSensitivity: leftoverSensitivity
+            )
         }
-        activityLog.log(.scan, "Smart Scan finished")
+        scanTask = task
+        await task.value
+        let cancelled = task.isCancelled
+        scanTask = nil
+        activityLog.log(.scan, cancelled ? "Smart Scan cancelled" : "Smart Scan finished")
         refreshDiskStats()
+    }
+
+    func cancelSmartScan() {
+        scanTask?.cancel()
+    }
+
+    func rebuildScanSummaries() {
+        scanSession.rebuildSummaries(from: scanResults)
+    }
+
+    func markScanStale() {
+        scanSession.markStale()
+        rebuildScanSummaries()
+    }
+
+    func clearScanResultsAfterClean(removedURLs: Set<URL>) {
+        scanResults.clearAfterClean(removedURLs: removedURLs)
+        scanSession.resultsMayBeStale = true
+        rebuildScanSummaries()
     }
 
     func markOnboardingComplete() {
@@ -174,7 +180,6 @@ final class AppState: ObservableObject {
         diskUsage = stats.diskUsage
     }
 
-    /// Reset first-run flags (useful while debugging).
     #if DEBUG
     func resetOnboardingForDebug() {
         hasCompletedOnboarding = false
@@ -182,4 +187,15 @@ final class AppState: ObservableObject {
         UserDefaults.standard.set(false, forKey: "mas.onboardingComplete")
     }
     #endif
+}
+
+extension View {
+    func installAppStores(from state: AppState) -> some View {
+        environmentObject(state)
+            .environmentObject(state.bookmarks)
+            .environmentObject(state.activityLog)
+            .environmentObject(state.scanSession)
+            .environmentObject(state.scanResults)
+            .environmentObject(state.subscription)
+    }
 }

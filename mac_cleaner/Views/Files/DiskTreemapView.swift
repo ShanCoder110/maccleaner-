@@ -140,27 +140,26 @@ struct DiskTreemapView: View {
     private func build(from url: URL) {
         isBuilding = true
         pathStack = []
-        DispatchQueue.global(qos: .userInitiated).async {
-            let node = TreemapBuilder().build(root: url)
-            DispatchQueue.main.async {
-                rootNode = node
-                isBuilding = false
-                statusMessage = "Showing \(node.children.count) top-level items in \(node.name)."
-                appState.activityLog.log(.scan, "Built treemap for \(url.path)")
+        Task {
+            let node = await ScanTask.detached {
+                TreemapBuilder().build(root: url)
             }
+            rootNode = node
+            isBuilding = false
+            statusMessage = "Showing \(node.children.count) top-level items in \(node.name)."
+            appState.activityLog.log(.scan, "Built treemap for \(url.path)")
         }
     }
 
     private func drill(into node: TreemapNode) {
         if node.children.isEmpty {
-            // Rebuild one level deeper on demand
             isBuilding = true
-            DispatchQueue.global(qos: .userInitiated).async {
-                let detailed = TreemapBuilder().build(root: node.url, maxDepth: 1)
-                DispatchQueue.main.async {
-                    pathStack.append(detailed)
-                    isBuilding = false
+            Task {
+                let detailed = await ScanTask.detached {
+                    TreemapBuilder().build(root: node.url, maxDepth: 1)
                 }
+                pathStack.append(detailed)
+                isBuilding = false
             }
         } else {
             pathStack.append(node)

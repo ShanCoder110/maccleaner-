@@ -12,12 +12,13 @@ struct GrantedFolder: Identifiable, Hashable, Codable {
     var path: String
     var kind: Kind
 
-    enum Kind: String, Codable, CaseIterable {
+    enum Kind: String, Codable, CaseIterable, Sendable {
         case applicationSupport
         case caches
         case logs
         case preferences
         case containers
+        case developer
         case homeAI
         case custom
         case downloads
@@ -33,6 +34,7 @@ struct GrantedFolder: Identifiable, Hashable, Codable {
             case .logs: return "Logs"
             case .preferences: return "Preferences"
             case .containers: return "Containers"
+            case .developer: return "Xcode & Developer"
             case .homeAI: return "AI Tool Folders"
             case .custom: return "Custom Folder"
             case .downloads: return "Downloads"
@@ -50,6 +52,7 @@ struct GrantedFolder: Identifiable, Hashable, Codable {
             case .logs: return "doc.text"
             case .preferences: return "gearshape"
             case .containers: return "shippingbox"
+            case .developer: return "hammer"
             case .homeAI: return "brain"
             case .custom: return "folder.badge.plus"
             case .downloads: return "arrow.down.circle"
@@ -61,7 +64,7 @@ struct GrantedFolder: Identifiable, Hashable, Codable {
     }
 }
 
-struct InstalledApp: Identifiable, Hashable {
+struct InstalledApp: Identifiable, Hashable, Sendable {
     var id: String { bundleIdentifier + "|" + path.path }
 
     let name: String
@@ -89,7 +92,7 @@ struct InstalledApp: Identifiable, Hashable {
     }
 }
 
-enum LeftoverKind: String, Codable, CaseIterable {
+enum LeftoverKind: String, Codable, CaseIterable, Sendable {
     case appBundle
     case preferences
     case caches
@@ -130,7 +133,7 @@ enum LeftoverKind: String, Codable, CaseIterable {
     }
 }
 
-struct LeftoverItem: Identifiable, Hashable {
+struct LeftoverItem: Identifiable, Hashable, Sendable {
     let id: UUID
     let url: URL
     let kind: LeftoverKind
@@ -207,7 +210,7 @@ struct LeftoverItem: Identifiable, Hashable {
     }
 }
 
-struct StorageItem: Identifiable, Hashable {
+struct StorageItem: Identifiable, Hashable, Sendable {
     let id: UUID
     let url: URL
     let name: String
@@ -241,32 +244,7 @@ struct StorageItem: Identifiable, Hashable {
     }
 }
 
-struct DuplicateGroup: Identifiable, Hashable {
-    let id: UUID
-    let byteSize: Int64
-    var files: [StorageItem]
-    var keepID: UUID?
-
-    var sizeLabel: String { ByteFormat.string(from: byteSize) }
-
-    /// Bytes reclaimable if one copy is kept.
-    var recoverableBytes: Int64 {
-        byteSize * Int64(max(0, files.count - 1))
-    }
-
-    var reclaimableLabel: String {
-        ByteFormat.string(from: recoverableBytes)
-    }
-
-    init(id: UUID = UUID(), byteSize: Int64, files: [StorageItem]) {
-        self.id = id
-        self.byteSize = byteSize
-        self.files = files
-        self.keepID = files.first?.id
-    }
-}
-
-struct SpaceCategory: Identifiable, Hashable {
+struct SpaceCategory: Identifiable, Hashable, Sendable {
     let id: String
     let title: String
     let subtitle: String
@@ -279,7 +257,7 @@ struct SpaceCategory: Identifiable, Hashable {
     var selectedBytes: Int64 { items.filter(\.isSelected).reduce(0) { $0 + $1.byteSize } }
 }
 
-struct TreemapNode: Identifiable, Hashable {
+struct TreemapNode: Identifiable, Hashable, Sendable {
     let id: UUID
     let name: String
     let url: URL
@@ -375,15 +353,11 @@ struct CleanResult: Hashable {
     var errors: [String] = []
 }
 
-enum ByteFormat {
-    private static let formatter: ByteCountFormatter = {
-        let f = ByteCountFormatter()
-        f.countStyle = .file
-        f.allowedUnits = [.useKB, .useMB, .useGB, .useTB]
-        return f
-    }()
-
-    static func string(from bytes: Int64) -> String {
-        formatter.string(fromByteCount: max(0, bytes))
+enum ByteFormat: Sendable {
+    nonisolated static func string(from bytes: Int64) -> String {
+        let formatter = ByteCountFormatter()
+        formatter.countStyle = .file
+        formatter.allowedUnits = [.useKB, .useMB, .useGB, .useTB]
+        return formatter.string(fromByteCount: max(0, bytes))
     }
 }

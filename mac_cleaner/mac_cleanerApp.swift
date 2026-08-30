@@ -13,7 +13,7 @@ struct mac_cleanerApp: App {
     var body: some Scene {
         WindowGroup {
             RootView()
-                .environmentObject(appState)
+                .installAppStores(from: appState)
                 .frame(minWidth: 980, minHeight: 640)
                 .onAppear {
                     NSApp.setActivationPolicy(.regular)
@@ -23,7 +23,6 @@ struct mac_cleanerApp: App {
                     }
                 }
         }
-        // Let sidebar/content paint to the top edge (traffic lights stay).
         .windowStyle(.hiddenTitleBar)
         .defaultSize(width: 1100, height: 720)
         .commands {
@@ -47,6 +46,11 @@ struct mac_cleanerApp: App {
                 .keyboardShortcut("g", modifiers: [.command, .shift])
             }
         }
+
+        MenuBarExtra("MacCleaner+", systemImage: "internaldrive") {
+            MenuBarMonitor()
+                .installAppStores(from: appState)
+        }
     }
 }
 
@@ -60,7 +64,7 @@ struct RootView: View {
                 ContentView()
                     .sheet(isPresented: $appState.showManagePermissions) {
                         ManagePermissionsView()
-                            .environmentObject(appState)
+                            .installAppStores(from: appState)
                     }
             } else {
                 FolderAccessOnboardingView()

@@ -22,14 +22,14 @@ private enum PaywallPlanKind: String, CaseIterable {
 
 struct PaywallView: View {
     @EnvironmentObject private var appState: AppState
+    @EnvironmentObject private var subscription: SubscriptionStore
     @Environment(\.dismiss) private var dismiss
 
     @State private var planKind: PaywallPlanKind = .monthly
     @State private var appeared = false
     @State private var shimmer = false
     @State private var featureVisible: [Bool] = Array(repeating: false, count: 5)
-
-    private var subscription: SubscriptionStore { appState.subscription }
+    @State private var showPrivacyPolicy = false
 
     private var selectedProduct: Product? {
         switch planKind {
@@ -43,7 +43,7 @@ struct PaywallView: View {
     }
 
     private let features: [(icon: String, title: String, subtitle: String)] = [
-        ("internaldrive", "Space Cleaner", "Clear caches, logs, and AI junk safely"),
+        ("internaldrive", "Space Cleaner", "Clear caches plus named Apple, developer, and AI data"),
         ("doc.on.doc", "Large Files", "Find oversized files across granted folders"),
         ("square.3.layers.3d", "Space Lens", "Visualize where storage is going"),
         ("tray", "Orphans", "Spot leftovers with no matching app"),
@@ -84,6 +84,9 @@ struct PaywallView: View {
                 shimmer = true
             }
             Task { await subscription.refresh() }
+        }
+        .sheet(isPresented: $showPrivacyPolicy) {
+            PrivacyPolicyView()
         }
     }
 
@@ -285,14 +288,7 @@ struct PaywallView: View {
     }
 
     private var priceLabel: String {
-        if let product = selectedProduct {
-            return product.displayPrice
-        }
-        switch planKind {
-        case .monthly: return "$4.99"
-        case .annual: return "$29.99"
-        case .lifetime: return "$59.99"
-        }
+        PaywallPricing.label(for: selectedProduct)
     }
 
     private var planSubtitle: String {
@@ -388,10 +384,16 @@ struct PaywallView: View {
     private var legalFooter: some View {
         VStack(spacing: AppSpacing.sm) {
             HStack(spacing: AppSpacing.md) {
-                Link("Privacy Policy", destination: AppLegal.privacyPolicyURL)
+                Button("Privacy Policy") {
+                    showPrivacyPolicy = true
+                }
+                .buttonStyle(.plain)
                 Text("·")
                     .foregroundStyle(AppColors.textTertiary)
                 Link("Terms of Use", destination: AppLegal.termsOfUseURL)
+                Text("·")
+                    .foregroundStyle(AppColors.textTertiary)
+                Link("Support", destination: AppLegal.supportMailtoURL)
             }
             .font(AppTypography.captionMedium)
             .foregroundStyle(AppColors.accent)

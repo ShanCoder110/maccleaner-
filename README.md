@@ -48,7 +48,7 @@ On first launch, grant folder access (Caches, Logs, Application Support, etc.). 
 | `shan.maccleaner.plus.pro.yearly` | Auto-renewable + 3-day trial |
 | `shan.maccleaner.plus.pro.lifetime` | Non-consumable |
 
-Before shipping, set your public Privacy Policy URL and support email in `mac_cleaner/Core/AppLegal.swift`.
+Privacy policy ships in-app (`AppLegal.privacyPolicyText`). Host `docs/privacy.html` (GitHub Pages or any https URL), set `AppLegal.hostedPrivacyPolicyURL`, and paste that same URL into App Store Connect. Support email is `AppLegal.supportEmail`. Paywall prices come only from StoreKit `Product.displayPrice`.
 
 ## Privacy & safety
 

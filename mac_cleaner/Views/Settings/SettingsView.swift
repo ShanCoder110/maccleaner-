@@ -7,7 +7,10 @@ import SwiftUI
 
 struct SettingsView: View {
     @EnvironmentObject private var appState: AppState
+    @EnvironmentObject private var bookmarks: BookmarkStore
+    @EnvironmentObject private var subscription: SubscriptionStore
     var showsToolbar: Bool = true
+    @State private var showPrivacyPolicy = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -33,6 +36,9 @@ struct SettingsView: View {
             }
         }
         .background(AppColors.background)
+        .sheet(isPresented: $showPrivacyPolicy) {
+            PrivacyPolicyView()
+        }
     }
 
     private var appearanceCard: some View {
@@ -88,14 +94,14 @@ struct SettingsView: View {
                     Spacer(minLength: 0)
                 }
 
-                if appState.bookmarks.folders.isEmpty {
+                if bookmarks.folders.isEmpty {
                     Text("No folders granted yet.")
                         .font(AppTypography.callout)
                         .foregroundStyle(AppColors.textSecondary)
                         .padding(.top, AppSpacing.xxs)
                 } else {
                     VStack(spacing: AppSpacing.sm) {
-                        ForEach(appState.bookmarks.folders) { folder in
+                        ForEach(bookmarks.folders) { folder in
                             folderRow(folder)
                         }
                     }
@@ -126,7 +132,7 @@ struct SettingsView: View {
             Spacer(minLength: AppSpacing.sm)
 
             SecondaryButton(title: "Remove", size: .compact) {
-                appState.bookmarks.removeFolder(id: folder.id)
+                bookmarks.removeFolder(id: folder.id)
             }
         }
         .padding(.horizontal, AppSpacing.md)
@@ -146,25 +152,31 @@ struct SettingsView: View {
                     .fixedSize(horizontal: false, vertical: true)
 
                 HStack(spacing: AppSpacing.md) {
-                    Link("Privacy Policy", destination: AppLegal.privacyPolicyURL)
+                    Button("Privacy Policy") {
+                        showPrivacyPolicy = true
+                    }
+                    .buttonStyle(.plain)
                     Text("·")
                         .foregroundStyle(AppColors.textTertiary)
                     Link("Terms of Use", destination: AppLegal.termsOfUseURL)
+                    Text("·")
+                        .foregroundStyle(AppColors.textTertiary)
+                    Link("Support", destination: AppLegal.supportMailtoURL)
                 }
                 .font(AppTypography.captionMedium)
                 .foregroundStyle(AppColors.accent)
 
                 SecondaryButton(title: "Restore Purchases", size: .compact) {
-                    Task { await appState.subscription.restore() }
+                    Task { await subscription.restore() }
                 }
 
                 #if DEBUG
                 SecondaryButton(title: "Unlock Pro (Debug)", size: .compact) {
-                    appState.subscription.unlockProForDebug()
+                    subscription.unlockProForDebug()
                 }
                 #endif
 
-                if let error = appState.subscription.purchaseError {
+                if let error = subscription.purchaseError {
                     Text(error)
                         .font(AppTypography.caption)
                         .foregroundStyle(AppColors.danger)

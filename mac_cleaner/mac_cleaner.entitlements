@@ -10,7 +10,8 @@
 	<true/>
 	<key>com.apple.security.files.downloads.read-write</key>
 	<true/>
-	<!-- Required so trashItem can move authorized files into the user’s Trash. Justify in App Review notes. -->
+	<!-- Required so trashItem can move authorized files into ~/.Trash. Do not widen.
+	     Review justification: AppStoreReviewNotes.trashExceptionJustification -->
 	<key>com.apple.security.temporary-exception.files.home-relative-path.read-write</key>
 	<array>
 		<string>/.Trash</string>

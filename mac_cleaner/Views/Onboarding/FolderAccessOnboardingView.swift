@@ -8,11 +8,12 @@ import AppKit
 
 struct FolderAccessOnboardingView: View {
     @EnvironmentObject private var appState: AppState
+    @EnvironmentObject private var bookmarks: BookmarkStore
     @State private var statusMessage = ""
     @State private var didAutoPrompt = false
 
     private let presets: [GrantedFolder.Kind] = [
-        .caches, .logs, .applicationSupport, .preferences, .downloads
+        .caches, .logs, .applicationSupport, .developer, .containers, .preferences, .downloads
     ]
 
     /// Needed to move apps to Trash (sandbox cannot trash /Applications without a grant).
@@ -102,7 +103,7 @@ struct FolderAccessOnboardingView: View {
                         appState.markOnboardingComplete()
                     }
                     PrimaryButton(
-                        title: appState.bookmarks.hasAnyAccess ? "Continue" : "Continue Without Folders",
+                        title: bookmarks.hasAnyAccess ? "Continue" : "Continue Without Folders",
                         icon: "arrow.right"
                     ) {
                         appState.markOnboardingComplete()
@@ -164,13 +165,13 @@ struct FolderAccessOnboardingView: View {
     }
 
     private func isGranted(_ kind: GrantedFolder.Kind) -> Bool {
-        appState.bookmarks.folders.contains { $0.kind == kind }
+        bookmarks.folders.contains { $0.kind == kind }
     }
 
     private func prompt(for kind: GrantedFolder.Kind) {
         // Ensure we are key window before presenting NSOpenPanel.
         NSApp.activate(ignoringOtherApps: true)
-        if let folder = appState.bookmarks.ensurePresetAccess(kind: kind) {
+        if let folder = bookmarks.ensurePresetAccess(kind: kind) {
             statusMessage = "Access granted for \(folder.kind.title)."
             appState.activityLog.log(.info, "Granted folder access: \(folder.kind.title)", path: folder.path)
         } else {
@@ -181,9 +182,10 @@ struct FolderAccessOnboardingView: View {
 
 struct FolderAccessBanner: View {
     @EnvironmentObject private var appState: AppState
+    @EnvironmentObject private var bookmarks: BookmarkStore
 
     var body: some View {
-        if !appState.bookmarks.hasAnyAccess {
+        if !bookmarks.hasAnyAccess {
             HStack(spacing: AppSpacing.md) {
                 Image(systemName: "folder.badge.questionmark")
                     .foregroundStyle(AppColors.warning)

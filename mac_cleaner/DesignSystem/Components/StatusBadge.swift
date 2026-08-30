@@ -5,7 +5,7 @@
 
 import SwiftUI
 
-enum StatusBadgeStyle {
+enum StatusBadgeStyle: Sendable {
     case success
     case warning
     case danger

@@ -10,11 +10,12 @@ import AppKit
 
 struct ManagePermissionsView: View {
     @EnvironmentObject private var appState: AppState
+    @EnvironmentObject private var bookmarks: BookmarkStore
     @Environment(\.dismiss) private var dismiss
     @State private var statusMessage = ""
 
     private let scanPresets: [GrantedFolder.Kind] = [
-        .caches, .logs, .applicationSupport, .preferences, .downloads
+        .caches, .logs, .applicationSupport, .developer, .containers, .preferences, .downloads
     ]
 
     private let appPresets: [GrantedFolder.Kind] = [
@@ -42,7 +43,7 @@ struct ManagePermissionsView: View {
 
                     extrasSection
 
-                    if !appState.bookmarks.folders.isEmpty {
+                    if !bookmarks.folders.isEmpty {
                         grantedSection
                     }
 
@@ -139,7 +140,7 @@ struct ManagePermissionsView: View {
 
             AppCard(padding: AppSpacing.md, radius: AppRadius.xl, showShadow: false) {
                 VStack(spacing: AppSpacing.sm) {
-                    ForEach(appState.bookmarks.folders) { folder in
+                    ForEach(bookmarks.folders) { folder in
                         HStack(spacing: AppSpacing.md) {
                             Image(systemName: folder.kind.systemImage)
                                 .foregroundStyle(AppColors.accent)
@@ -158,7 +159,7 @@ struct ManagePermissionsView: View {
                             Spacer()
 
                             SecondaryButton(title: "Revoke", size: .compact) {
-                                appState.bookmarks.removeFolder(id: folder.id)
+                                bookmarks.removeFolder(id: folder.id)
                                 statusMessage = "Revoked access to \(folder.displayName)."
                                 appState.activityLog.log(.info, "Revoked folder access", path: folder.path)
                             }
@@ -212,12 +213,12 @@ struct ManagePermissionsView: View {
     }
 
     private func isGranted(_ kind: GrantedFolder.Kind) -> Bool {
-        appState.bookmarks.folders.contains { $0.kind == kind }
+        bookmarks.folders.contains { $0.kind == kind }
     }
 
     private func prompt(for kind: GrantedFolder.Kind) {
         NSApp.activate(ignoringOtherApps: true)
-        if let folder = appState.bookmarks.ensurePresetAccess(kind: kind) {
+        if let folder = bookmarks.ensurePresetAccess(kind: kind) {
             statusMessage = "Access granted for \(folder.kind.title)."
             appState.activityLog.log(.info, "Granted folder access: \(folder.kind.title)", path: folder.path)
         } else {

@@ -7,6 +7,8 @@ import SwiftUI
 
 struct SpaceCleanerView: View {
     @EnvironmentObject private var appState: AppState
+    @EnvironmentObject private var session: ScanSessionStore
+    @EnvironmentObject private var scanResults: ScanResultsHub
 
     @State private var searchText = ""
     @State private var isCleaning = false
@@ -14,24 +16,24 @@ struct SpaceCleanerView: View {
     @State private var statusMessage = ""
     @State private var isRescanning = false
 
-    private var session: ScanSessionStore { appState.scanSession }
+    private var space: SpaceResultsStore { scanResults.space }
 
     private var categoriesBinding: Binding<[SpaceCategory]> {
         Binding(
-            get: { session.spaceCategories },
+            get: { space.categories },
             set: {
-                session.spaceCategories = $0
-                session.rebuildSummaries()
+                space.categories = $0
+                appState.rebuildScanSummaries()
             }
         )
     }
 
     private var selectedURLs: [URL] {
-        session.spaceCategories.flatMap { $0.items.filter(\.isSelected).map(\.url) }
+        space.categories.flatMap { $0.items.filter(\.isSelected).map(\.url) }
     }
 
     private var selectedBytes: Int64 {
-        session.spaceCategories.flatMap(\.items).filter(\.isSelected).reduce(0) { $0 + $1.byteSize }
+        space.categories.flatMap(\.items).filter(\.isSelected).reduce(0) { $0 + $1.byteSize }
     }
 
     var body: some View {
@@ -40,7 +42,7 @@ struct SpaceCleanerView: View {
                 title: "Space Cleaner",
                 subtitle: session.hasResults
                     ? "Using Smart Scan results — rescan anytime"
-                    : "Caches, logs, and AI tool data in folders you authorized",
+                    : "Named Apple, developer, and AI data in folders you authorized",
                 searchText: $searchText
             )
 
@@ -52,12 +54,18 @@ struct SpaceCleanerView: View {
                         appState.openManagePermissions()
                     }
                     Spacer()
-                    SecondaryButton(
-                        title: session.hasResults ? "Rescan" : "Scan",
-                        icon: "magnifyingglass",
-                        size: .compact,
-                        action: rescan
-                    )
+                    if session.isScanning {
+                        SecondaryButton(title: "Cancel", icon: "xmark", size: .compact) {
+                            appState.cancelSmartScan()
+                        }
+                    } else {
+                        SecondaryButton(
+                            title: session.hasResults ? "Rescan" : "Scan",
+                            icon: "magnifyingglass",
+                            size: .compact,
+                            action: rescan
+                        )
+                    }
                     PrimaryButton(
                         title: "Clean Selected",
                         icon: "trash",
@@ -77,7 +85,7 @@ struct SpaceCleanerView: View {
                 if isRescanning || session.isScanning {
                     ProgressView(session.isScanning ? "\(session.progressPercent)% · \(session.progressLabel)" : "Scanning authorized locations…")
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
-                } else if session.spaceCategories.isEmpty {
+                } else if space.categories.isEmpty {
                     EmptyState(
                         title: session.hasResults ? "No junk categories" : "No scan yet",
                         message: session.hasResults
@@ -187,7 +195,7 @@ struct SpaceCleanerView: View {
         let urls = selectedURLs
         let result = await appState.cleaning.trash(urls: urls)
         let removed = Set(urls.filter { !FileManager.default.fileExists(atPath: $0.path) })
-        session.clearAfterClean(removedURLs: removed)
+        appState.clearScanResultsAfterClean(removedURLs: removed)
         statusMessage = "Moved \(result.trashedCount) items (\(ByteFormat.string(from: result.freedBytes)))."
         isCleaning = false
     }

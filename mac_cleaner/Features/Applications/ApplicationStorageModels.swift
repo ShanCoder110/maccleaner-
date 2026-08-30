@@ -9,12 +9,16 @@ import Foundation
 
 // MARK: - Match confidence (separate from deletion safety)
 
-enum MatchConfidence: String, Codable, CaseIterable, Identifiable, Hashable {
+enum MatchConfidence: String, Codable, CaseIterable, Identifiable, Hashable, Sendable {
     case confirmed
     case likely
     case possible
 
     var id: String { rawValue }
+
+    var isLikelyOrBetter: Bool {
+        self == .confirmed || self == .likely
+    }
 
     var title: String {
         switch self {
@@ -42,7 +46,7 @@ enum MatchConfidence: String, Codable, CaseIterable, Identifiable, Hashable {
     }
 }
 
-enum MatchReason: String, Codable, CaseIterable, Identifiable, Hashable {
+enum MatchReason: String, Codable, CaseIterable, Identifiable, Hashable, Sendable {
     case appBundleItself
     case bundleIdentifier
     case exactAppName
@@ -104,7 +108,7 @@ enum MatchReason: String, Codable, CaseIterable, Identifiable, Hashable {
     }
 }
 
-enum SafetyClassification: String, Codable, CaseIterable, Identifiable, Hashable {
+enum SafetyClassification: String, Codable, CaseIterable, Identifiable, Hashable, Sendable {
     case safeToRemove
     case reviewRecommended
     case sensitive
@@ -240,4 +244,13 @@ enum UnusedThreshold: String, CaseIterable, Identifiable {
         case .oneYear: return 365 * 24 * 60 * 60
         }
     }
+}
+
+struct UninstallResultSummary: Equatable {
+    var title: String
+    var freedLabel: String
+    var appCount: Int
+    var relatedCount: Int
+    var failedCount: Int
+    var errorDetails: [String]
 }

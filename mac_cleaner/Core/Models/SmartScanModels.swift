@@ -57,7 +57,7 @@ enum SmartScanStageID: String, CaseIterable, Identifiable, Hashable {
         case .duplicates: return "Duplicates"
         case .applications: return "Applications"
         case .orphans: return "Orphans"
-        case .aiData: return "AI tool data"
+        case .aiData: return "Named catalogs"
         }
     }
 }
@@ -124,7 +124,7 @@ struct SmartScanSummary: Hashable {
     )
 }
 
-enum SmartScanAggregator {
+enum SmartScanAggregator: Sendable {
     static func canonicalPath(_ url: URL) -> String {
         url.standardizedFileURL.resolvingSymlinksInPath().path
     }
@@ -150,6 +150,7 @@ enum SmartScanAggregator {
 
         let dupeRecoverable = dupes.reduce(Int64(0)) { $0 + $1.recoverableBytes }
         let dupeGroupCount = dupes.count
+        let dupeTotalSize = dupes.reduce(Int64(0)) { $0 + $1.totalSize }
 
         let orphanBytes = orphans.reduce(Int64(0)) { $0 + $1.byteSize }
 
@@ -164,7 +165,7 @@ enum SmartScanAggregator {
                 progress: spaceBytes == 0 ? 0.05 : 0.85,
                 destination: .spaceCleaner,
                 safety: spaceSafety,
-                explanation: "Caches, logs, and AI tool data found in folders you authorized.",
+                explanation: "Named Apple, developer, and AI data plus caches and logs in folders you authorized.",
                 statusDetail: nil
             ),
             SmartScanCategoryResult(
@@ -184,13 +185,13 @@ enum SmartScanAggregator {
                 id: "dupes",
                 title: "Duplicates",
                 systemImage: "rectangle.on.rectangle",
-                totalBytes: dupeRecoverable,
+                totalBytes: dupeTotalSize,
                 recoverableBytes: dupeRecoverable,
                 itemCount: dupeGroupCount,
                 progress: dupes.isEmpty ? 0.05 : 0.55,
                 destination: .duplicates,
                 safety: .review,
-                explanation: "Files with identical content found in authorized folders. Recoverable size keeps one copy.",
+                explanation: "Identical files in authorized folders. Recoverable size is copies selected for removal.",
                 statusDetail: nil
             ),
             SmartScanCategoryResult(
@@ -249,8 +250,7 @@ enum SmartScanAggregator {
         }
 
         for group in dupes {
-            let keepID = group.keepID ?? group.files.first?.id
-            for file in group.files where file.id != keepID {
+            for file in group.files where file.isSelected {
                 let key = canonicalPath(file.url)
                 guard claimed.insert(key).inserted else { continue }
                 reviewBytes += file.byteSize
@@ -311,17 +311,15 @@ enum SmartScanAggregator {
             return false
         }
 
-        // Authorized caches / logs.
+        if SpaceCatalogSafety.isReviewOnly(name: name, category: category) {
+            return false
+        }
+
         if category.contains("cache") || category.contains("log") {
             return true
         }
 
-        // AI catalog: selected non-sensitive cache/log-style entries.
-        if ["Cursor", "Codex", "Claude", "Ollama", "LM Studio"].contains(item.category) {
-            return name.contains("cache") || name.contains("log") || name.contains("gpucache") || name.contains("gpu cache")
-        }
-
-        return false
+        return SpaceCatalogSafety.looksRegenerable(name: name, category: category)
     }
 
     private static func safetyForSpaceItems(_ items: [StorageItem]) -> SmartScanCategorySafety {

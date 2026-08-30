@@ -8,12 +8,13 @@ import AppKit
 
 struct ActivityLogView: View {
     @EnvironmentObject private var appState: AppState
+    @EnvironmentObject private var activityLog: ActivityLogStore
 
     @State private var searchText = ""
     @State private var filter = "All"
 
     private var filtered: [ActivityLogEntry] {
-        appState.activityLog.entries.filter { entry in
+        activityLog.entries.filter { entry in
             let matchesFilter: Bool = {
                 switch filter {
                 case "Errors": return entry.kind == .error
@@ -49,7 +50,7 @@ struct ActivityLogView: View {
                         copyLog()
                     }
                     SecondaryButton(title: "Clear", size: .compact) {
-                        appState.activityLog.clear()
+                        activityLog.clear()
                     }
                 }
 
@@ -121,6 +122,6 @@ struct ActivityLogView: View {
         }.joined(separator: "\n")
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString(text, forType: .string)
-        appState.activityLog.log(.info, "Copied \(filtered.count) log lines")
+        activityLog.log(.info, "Copied \(filtered.count) log lines")
     }
 }

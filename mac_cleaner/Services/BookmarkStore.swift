@@ -183,7 +183,7 @@ final class BookmarkStore: ObservableObject {
         )
     }
 
-    static func realUserHomePath() -> String {
+    nonisolated static func realUserHomePath() -> String {
         if let pw = getpwuid(getuid()), let dir = pw.pointee.pw_dir {
             return String(cString: dir)
         }
@@ -198,6 +198,7 @@ final class BookmarkStore: ObservableObject {
         case .logs: return (home as NSString).appendingPathComponent("Library/Logs")
         case .preferences: return (home as NSString).appendingPathComponent("Library/Preferences")
         case .containers: return (home as NSString).appendingPathComponent("Library/Containers")
+        case .developer: return (home as NSString).appendingPathComponent("Library/Developer")
         case .homeAI: return home
         case .downloads: return (home as NSString).appendingPathComponent("Downloads")
         case .documents: return (home as NSString).appendingPathComponent("Documents")
