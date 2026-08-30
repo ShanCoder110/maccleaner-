@@ -5,7 +5,7 @@
 
 import Foundation
 
-enum PathNormalization: Sendable {
+nonisolated enum PathNormalization: Sendable {
     static func normalizedForMatching(_ value: String) -> String {
         value
             .folding(options: [.diacriticInsensitive, .caseInsensitive], locale: .current)
@@ -59,25 +59,25 @@ enum PathNormalization: Sendable {
 }
 
 extension String {
-    func normalizedForMatching() -> String {
+    nonisolated func normalizedForMatching() -> String {
         PathNormalization.normalizedForMatching(self)
     }
 
-    var lettersOnly: String {
+    nonisolated var lettersOnly: String {
         PathNormalization.lettersOnly(self)
     }
 
-    func strippingTrailingVersion() -> String {
+    nonisolated func strippingTrailingVersion() -> String {
         PathNormalization.strippingTrailingVersion(self)
     }
 
-    var bundleLastTwoComponents: String {
+    nonisolated var bundleLastTwoComponents: String {
         let parts = split(separator: ".")
         guard parts.count >= 2 else { return normalizedForMatching() }
         return (parts.suffix(2).joined(separator: ".")).normalizedForMatching()
     }
 
-    var bundleCompanyName: String? {
+    nonisolated var bundleCompanyName: String? {
         let parts = split(separator: ".")
         guard parts.count >= 2 else { return nil }
         let company = String(parts[1])

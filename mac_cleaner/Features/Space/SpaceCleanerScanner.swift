@@ -110,6 +110,7 @@ struct SpaceCleanerScanner: Sendable {
                         byteSize: size,
                         isSelected: true,
                         isSensitive: PathNormalization.isSensitivePath(url),
+                        isRootOwned: FileOwnership.isOwnedByRoot(url),
                         modified: FileSizeCalculator.modificationDate(of: url)
                     )
                 )
@@ -161,7 +162,8 @@ struct SpaceCleanerScanner: Sendable {
                         category: title,
                         byteSize: size,
                         isSelected: false,
-                        isSensitive: PathNormalization.isSensitivePath(url)
+                        isSensitive: PathNormalization.isSensitivePath(url),
+                        isRootOwned: FileOwnership.isOwnedByRoot(url)
                     )
                 )
             }

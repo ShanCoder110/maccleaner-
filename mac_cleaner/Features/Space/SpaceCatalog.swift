@@ -89,6 +89,7 @@ enum SpaceCatalogScanner: Sendable {
                     byteSize: size,
                     isSelected: entry.effectiveDefaultSelected,
                     isSensitive: entry.isSensitive,
+                    isRootOwned: FileOwnership.isOwnedByRoot(url),
                     modified: modified(url)
                 )
             )

@@ -134,7 +134,7 @@ struct AppSidebar: View {
 
                 if subscription.isPro {
                     SecondaryButton(title: "Manage", size: .compact) {
-                        selection = .settings
+                        appState.presentPaywall()
                     }
                 } else {
                     PrimaryButton(title: "Upgrade to Pro", icon: "sparkles", size: .compact) {

@@ -42,6 +42,18 @@ struct PaywallView: View {
         }
     }
 
+    private var isCurrentPlan: Bool {
+        guard let activeProductID = subscription.activeProductID else { return false }
+        switch planKind {
+        case .monthly:
+            return activeProductID == SubscriptionStore.monthlyProductID
+        case .annual:
+            return activeProductID == SubscriptionStore.yearlyProductID
+        case .lifetime:
+            return activeProductID == SubscriptionStore.lifetimeProductID
+        }
+    }
+
     private let features: [(icon: String, title: String, subtitle: String)] = [
         ("internaldrive", "Space Cleaner", "Clear caches plus named Apple, developer, and AI data"),
         ("doc.on.doc", "Large Files", "Find oversized files across granted folders"),
@@ -258,13 +270,17 @@ struct PaywallView: View {
                     .foregroundStyle(AppColors.textPrimary)
                     .contentTransition(.numericText())
                 Spacer()
-                switch planKind {
-                case .monthly:
-                    StatusBadge(title: "Flexible", style: .neutral)
-                case .annual:
-                    StatusBadge(title: "Popular", style: .info)
-                case .lifetime:
-                    StatusBadge(title: "Best value", style: .success)
+                if isCurrentPlan {
+                    StatusBadge(title: "Current Plan", style: .success, icon: "checkmark.circle.fill")
+                } else {
+                    switch planKind {
+                    case .monthly:
+                        StatusBadge(title: "Flexible", style: .neutral)
+                    case .annual:
+                        StatusBadge(title: "Popular", style: .info)
+                    case .lifetime:
+                        StatusBadge(title: "Best value", style: .success)
+                    }
                 }
             }
 
@@ -283,7 +299,7 @@ struct PaywallView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
             RoundedRectangle(cornerRadius: AppRadius.xxl, style: .continuous)
-                .fill(AppColors.accentMuted.opacity(0.55))
+                .fill(isCurrentPlan ? AppColors.success.opacity(0.15) : AppColors.accentMuted.opacity(0.55))
         )
     }
 
@@ -312,11 +328,18 @@ struct PaywallView: View {
         VStack(spacing: AppSpacing.sm) {
             Button {
                 Task {
-                    guard let product = selectedProduct else { return }
-                    let ok = await subscription.purchase(product)
-                    if ok {
-                        appState.handlePaywallPurchaseSuccess()
-                        dismiss()
+                    if isCurrentPlan {
+                        // Open Apple's subscription management page
+                        if let url = URL(string: "https://apps.apple.com/account/subscriptions") {
+                            NSWorkspace.shared.open(url)
+                        }
+                    } else {
+                        guard let product = selectedProduct else { return }
+                        let ok = await subscription.purchase(product)
+                        if ok {
+                            appState.handlePaywallPurchaseSuccess()
+                            dismiss()
+                        }
                     }
                 }
             } label: {
@@ -324,7 +347,10 @@ struct PaywallView: View {
                     RoundedRectangle(cornerRadius: AppRadius.xl, style: .continuous)
                         .fill(
                             LinearGradient(
-                                colors: [
+                                colors: isCurrentPlan ? [
+                                    AppColors.textSecondary,
+                                    AppColors.textSecondary.opacity(0.85)
+                                ] : [
                                     AppColors.accent,
                                     AppColors.accent.opacity(0.85),
                                     AppColors.info
@@ -336,7 +362,7 @@ struct PaywallView: View {
                         .frame(height: 48)
 
                     HStack(spacing: AppSpacing.sm) {
-                        if subscription.isLoading {
+                        if subscription.isLoading && !isCurrentPlan {
                             ProgressView()
                                 .controlSize(.small)
                         }
@@ -347,8 +373,8 @@ struct PaywallView: View {
                 }
             }
             .buttonStyle(.plain)
-            .disabled(selectedProduct == nil || subscription.isLoading)
-            .opacity(selectedProduct == nil ? 0.55 : 1)
+            .disabled((!isCurrentPlan && selectedProduct == nil) || (!isCurrentPlan && subscription.isLoading))
+            .opacity((!isCurrentPlan && selectedProduct == nil) ? 0.55 : 1)
             .appShadow(AppShadow.button)
 
             SecondaryButton(title: "Restore Purchases", size: .compact) {
@@ -371,6 +397,10 @@ struct PaywallView: View {
     }
 
     private var ctaTitle: String {
+        if isCurrentPlan {
+            return "Manage Subscription"
+        }
+        
         switch planKind {
         case .monthly:
             return subscription.isEligibleForIntroOffer ? "Start 3-Day Free Trial" : "Continue with Monthly"
@@ -400,7 +430,7 @@ struct PaywallView: View {
 
             Text(planKind == .lifetime
                  ? "Lifetime is a one-time charge to your Apple ID. Restore purchases on any Mac signed into the same Apple ID."
-                 : "Payment is charged to your Apple ID. Subscriptions renew automatically unless canceled at least 24 hours before the period ends. Manage in System Settings → Apple ID → Subscriptions.")
+                 : "Payment is charged to your Apple ID. Subscriptions renew automatically unless canceled at least 24 hours before the period ends.")
                 .font(AppTypography.micro)
                 .foregroundStyle(AppColors.textTertiary)
                 .fixedSize(horizontal: false, vertical: true)

@@ -38,6 +38,7 @@ struct LargeFilesScanner: Sendable {
                         category: "Large Files",
                         byteSize: visit.byteSize,
                         isSelected: false,
+                        isRootOwned: FileOwnership.isOwnedByRoot(visit.url),
                         modified: visit.modified
                     )
                 )

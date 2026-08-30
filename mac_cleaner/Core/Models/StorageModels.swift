@@ -64,7 +64,7 @@ struct GrantedFolder: Identifiable, Hashable, Codable {
     }
 }
 
-struct InstalledApp: Identifiable, Hashable, Sendable {
+nonisolated struct InstalledApp: Identifiable, Hashable, Sendable {
     var id: String { bundleIdentifier + "|" + path.path }
 
     let name: String
@@ -92,7 +92,7 @@ struct InstalledApp: Identifiable, Hashable, Sendable {
     }
 }
 
-enum LeftoverKind: String, Codable, CaseIterable, Sendable {
+nonisolated enum LeftoverKind: String, Codable, CaseIterable, Sendable {
     case appBundle
     case preferences
     case caches
@@ -133,13 +133,14 @@ enum LeftoverKind: String, Codable, CaseIterable, Sendable {
     }
 }
 
-struct LeftoverItem: Identifiable, Hashable, Sendable {
+nonisolated struct LeftoverItem: Identifiable, Hashable, Sendable {
     let id: UUID
     let url: URL
     let kind: LeftoverKind
     var byteSize: Int64
     var isSelected: Bool
     var isSensitive: Bool
+    var isRootOwned: Bool
     var matchConfidence: MatchConfidence
     var matchReason: MatchReason
     var safety: SafetyClassification
@@ -161,6 +162,7 @@ struct LeftoverItem: Identifiable, Hashable, Sendable {
         byteSize: Int64,
         isSelected: Bool? = nil,
         isSensitive: Bool = false,
+        isRootOwned: Bool = false,
         matchConfidence: MatchConfidence = .likely,
         matchReason: MatchReason = .normalizedName,
         safety: SafetyClassification? = nil,
@@ -172,6 +174,7 @@ struct LeftoverItem: Identifiable, Hashable, Sendable {
         self.kind = kind
         self.byteSize = byteSize
         self.isSensitive = isSensitive
+        self.isRootOwned = isRootOwned
         self.matchConfidence = matchConfidence
         self.matchReason = matchReason
         let resolvedSafety = safety ?? SafetyClassification.classify(kind: kind, url: url)
@@ -180,7 +183,8 @@ struct LeftoverItem: Identifiable, Hashable, Sendable {
         self.relatedInstalledAppNames = relatedInstalledAppNames
 
         if let isSelected {
-            self.isSelected = (self.safety == .sensitive || isSharedOrPossiblyShared) ? false : isSelected
+            // Don't allow selecting root-owned, sensitive, or shared items
+            self.isSelected = (self.safety == .sensitive || isSharedOrPossiblyShared || isRootOwned) ? false : isSelected
         } else {
             self.isSelected = LeftoverItem.defaultSelection(
                 kind: kind,
@@ -218,6 +222,7 @@ struct StorageItem: Identifiable, Hashable, Sendable {
     var byteSize: Int64
     var isSelected: Bool
     var isSensitive: Bool
+    var isRootOwned: Bool
     var modified: Date?
 
     var sizeLabel: String { ByteFormat.string(from: byteSize) }
@@ -231,6 +236,7 @@ struct StorageItem: Identifiable, Hashable, Sendable {
         byteSize: Int64,
         isSelected: Bool = true,
         isSensitive: Bool = false,
+        isRootOwned: Bool = false,
         modified: Date? = nil
     ) {
         self.id = id
@@ -238,8 +244,10 @@ struct StorageItem: Identifiable, Hashable, Sendable {
         self.name = name ?? url.lastPathComponent
         self.category = category
         self.byteSize = byteSize
-        self.isSelected = isSensitive ? false : isSelected
+        // Don't allow selecting root-owned or sensitive items by default
+        self.isSelected = (isSensitive || isRootOwned) ? false : isSelected
         self.isSensitive = isSensitive
+        self.isRootOwned = isRootOwned
         self.modified = modified
     }
 }

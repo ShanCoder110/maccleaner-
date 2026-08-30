@@ -50,7 +50,8 @@ struct OrphanScanner: Sendable {
                     kind: kind,
                     byteSize: size,
                     isSelected: autoSelect,
-                    isSensitive: !autoSelect || PathNormalization.isSensitivePath(url)
+                    isSensitive: !autoSelect || PathNormalization.isSensitivePath(url),
+                    isRootOwned: FileOwnership.isOwnedByRoot(url)
                 )
             )
         }

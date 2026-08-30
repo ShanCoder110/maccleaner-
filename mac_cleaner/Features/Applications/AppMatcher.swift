@@ -7,12 +7,12 @@
 
 import Foundation
 
-struct MatchHit: Sendable {
+nonisolated struct MatchHit: Sendable {
     let confidence: MatchConfidence
     let reason: MatchReason
 }
 
-struct AppMatcher: Sendable {
+nonisolated struct AppMatcher: Sendable {
     let sensitivity: LeftoverSensitivity
     let normalizedBundleID: String
     let normalizedName: String
@@ -35,7 +35,7 @@ struct AppMatcher: Sendable {
     }
 
     /// Returns the strongest match hit, or nil.
-    nonisolated func matches(name: String, url: URL) -> MatchHit? {
+    func matches(name: String, url: URL) -> MatchHit? {
         let normalized = name.normalizedForMatching()
         guard !normalized.isEmpty else { return nil }
 

@@ -45,6 +45,7 @@ struct LeftoverFinderService {
             url: app.path,
             kind: .appBundle,
             byteSize: app.byteSize > 0 ? app.byteSize : FileSizeCalculator.size(of: app.path, maxDepth: 4),
+            isRootOwned: FileOwnership.isOwnedByRoot(app.path),
             matchConfidence: .confirmed,
             matchReason: .appBundleItself,
             safety: .reviewRecommended,
@@ -170,6 +171,7 @@ struct LeftoverFinderService {
                         url: standardized,
                         kind: kind,
                         byteSize: FileSizeCalculator.size(of: standardized, maxDepth: 5),
+                        isRootOwned: FileOwnership.isOwnedByRoot(standardized),
                         matchConfidence: hit.confidence,
                         matchReason: hit.reason,
                         safety: safety,
@@ -199,7 +201,7 @@ struct LeftoverFinderService {
 }
 
 private extension Array where Element == String {
-    func uniquedPreservingOrder() -> [String] {
+    nonisolated func uniquedPreservingOrder() -> [String] {
         var seen = Set<String>()
         var result: [String] = []
         for value in self where seen.insert(value).inserted {

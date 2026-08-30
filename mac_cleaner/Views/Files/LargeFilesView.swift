@@ -14,8 +14,16 @@ struct LargeFilesView: View {
     @State private var isCleaning = false
     @State private var confirmClean = false
     @State private var statusMessage = ""
-    @State private var thresholdMB: Double = 50
+    @State private var thresholdMB: Int = 50
     @State private var isRescanning = false
+
+    private static let sizePresets: [(Int, String)] = [
+        (10, "10 MB"),
+        (50, "50 MB"),
+        (100, "100 MB"),
+        (250, "250 MB"),
+        (500, "500 MB"),
+    ]
 
     private var largeFiles: LargeFilesResultsStore { scanResults.largeFiles }
 
@@ -58,16 +66,6 @@ struct LargeFilesView: View {
                         appState.openManagePermissions()
                     }
 
-                    Text("Minimum size")
-                        .font(AppTypography.callout)
-                        .foregroundStyle(AppColors.textSecondary)
-                    Slider(value: $thresholdMB, in: 10...500, step: 10)
-                        .frame(maxWidth: 220)
-                    Text("\(Int(thresholdMB)) MB")
-                        .font(AppTypography.captionMedium)
-                        .foregroundStyle(AppColors.textPrimary)
-                        .frame(width: 56, alignment: .leading)
-
                     Spacer()
 
                     if session.isScanning {
@@ -90,6 +88,8 @@ struct LargeFilesView: View {
                         size: .compact
                     ) { confirmClean = true }
                 }
+
+                sizeThresholdBar
 
                 if let message = largeFiles.incompleteMessage, session.hasResults || !largeFiles.items.isEmpty, !session.isScanning {
                     incompleteBanner(message)
@@ -142,6 +142,10 @@ struct LargeFilesView: View {
                                                     .lineLimit(1)
                                             }
                                             Spacer()
+                                            if item.isRootOwned {
+                                                StatusBadge(title: "Root-owned", style: .danger)
+                                                    .help(FileOwnership.rootOwnedTooltip)
+                                            }
                                             SizeBadge(value: item.sizeLabel, emphasis: .prominent)
                                             IconButton(systemName: "folder", size: 28, iconSize: 11) {
                                                 appState.cleaning.reveal(item.url)
@@ -169,6 +173,38 @@ struct LargeFilesView: View {
         }
     }
 
+    private var sizeThresholdBar: some View {
+        HStack(spacing: AppSpacing.md) {
+            HStack(spacing: AppSpacing.xs) {
+                Image(systemName: "internaldrive")
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(AppColors.accent)
+                Text("Show files larger than")
+                    .font(AppTypography.calloutMedium)
+                    .foregroundStyle(AppColors.textSecondary)
+                    .fixedSize(horizontal: true, vertical: false)
+            }
+
+            AppFilterChipGroup(options: Self.sizePresets, selection: $thresholdMB)
+
+            Spacer(minLength: 0)
+
+            SizeBadge(value: "≥ \(thresholdMB) MB", emphasis: .accent)
+        }
+        .padding(.horizontal, AppSpacing.md)
+        .padding(.vertical, AppSpacing.sm)
+        .background(
+            RoundedRectangle(cornerRadius: AppRadius.lg, style: .continuous)
+                .fill(AppColors.surface)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: AppRadius.lg, style: .continuous)
+                .strokeBorder(AppColors.border, lineWidth: 1)
+        )
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("Minimum file size")
+    }
+
     private func incompleteBanner(_ message: String) -> some View {
         HStack(alignment: .top, spacing: AppSpacing.sm) {
             Image(systemName: "info.circle")
@@ -192,6 +228,7 @@ struct LargeFilesView: View {
     }
 
     private func rescan() {
+        guard !isRescanning, !session.isScanning else { return }
         isRescanning = true
         Task {
             let scope = ScanScope.snapshot(from: appState.bookmarks)
@@ -211,11 +248,36 @@ struct LargeFilesView: View {
 
     private func clean() async {
         isCleaning = true
-        let urls = selected.map(\.url)
+        let selectedItems = selected
+        let urls = selectedItems.map(\.url)
+        
+        // Check for root-owned files and warn user
+        let rootOwnedItems = selectedItems.filter(\.isRootOwned)
+        
+        if !rootOwnedItems.isEmpty {
+            let names = rootOwnedItems.prefix(3).map(\.name).joined(separator: ", ")
+            let more = rootOwnedItems.count > 3 ? " and \(rootOwnedItems.count - 3) more" : ""
+            statusMessage = "⚠️ Cannot delete root-owned files: \(names)\(more). These require manual deletion with sudo in Terminal. See Activity log for commands."
+            
+            // Log terminal commands for each root-owned file
+            for item in rootOwnedItems {
+                await MainActor.run {
+                    appState.activityLog.log(.error, FileOwnership.rootOwnershipExplanation(for: item.url))
+                }
+            }
+            isCleaning = false
+            return
+        }
+        
         let result = await appState.cleaning.trash(urls: urls)
         let removed = Set(urls.filter { !FileManager.default.fileExists(atPath: $0.path) })
         appState.clearScanResultsAfterClean(removedURLs: removed)
-        statusMessage = "Moved \(result.trashedCount) files (\(ByteFormat.string(from: result.freedBytes)))."
+        
+        if !result.errors.isEmpty {
+            statusMessage = "⚠️ Moved \(result.trashedCount) files. \(result.errors.count) error(s) - see Activity log."
+        } else {
+            statusMessage = "✓ Moved \(result.trashedCount) files (\(ByteFormat.string(from: result.freedBytes)))."
+        }
         isCleaning = false
     }
 }

@@ -42,17 +42,17 @@ final class AppState: ObservableObject {
     private var scanTask: Task<Void, Never>?
 
     init(
-        bookmarks: BookmarkStore = BookmarkStore(),
-        activityLog: ActivityLogStore = ActivityLogStore(),
-        scanSession: ScanSessionStore = ScanSessionStore(),
+        bookmarks: BookmarkStore? = nil,
+        activityLog: ActivityLogStore? = nil,
+        scanSession: ScanSessionStore? = nil,
         scanResults: ScanResultsHub? = nil,
-        subscription: SubscriptionStore = SubscriptionStore()
+        subscription: SubscriptionStore? = nil
     ) {
-        self.bookmarks = bookmarks
-        self.activityLog = activityLog
-        self.scanSession = scanSession
+        self.bookmarks = bookmarks ?? BookmarkStore()
+        self.activityLog = activityLog ?? ActivityLogStore()
+        self.scanSession = scanSession ?? ScanSessionStore()
         self.scanResults = scanResults ?? ScanResultsHub()
-        self.subscription = subscription
+        self.subscription = subscription ?? SubscriptionStore()
 
         if let raw = UserDefaults.standard.string(forKey: "mas.sensitivity"),
            let value = LeftoverSensitivity(rawValue: raw) {
@@ -76,7 +76,7 @@ final class AppState: ObservableObject {
             hasCompletedOnboarding = false
         }
 
-        bookmarks.objectWillChange
+        self.bookmarks.objectWillChange
             .receive(on: DispatchQueue.main)
             .sink { [weak self] _ in
                 self?.markScanStale()

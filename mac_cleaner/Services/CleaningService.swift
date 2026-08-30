@@ -198,6 +198,14 @@ struct CleaningService {
     private static func permissionAwareMessage(for url: URL, error: Error) -> String {
         let nsError = error as NSError
         let base = error.localizedDescription
+        
+        // Check if file is owned by root
+        if let attrs = try? FileManager.default.attributesOfItem(atPath: url.path),
+           let ownerName = attrs[.ownerAccountName] as? String,
+           ownerName == "root" {
+            return "\(url.lastPathComponent) is owned by root/system. Run in Terminal: sudo rm -rf \"\(url.path)\""
+        }
+        
         if nsError.domain == NSCocoaErrorDomain,
            nsError.code == NSFileWriteNoPermissionError || nsError.code == 513 {
             return "Permission denied for \(url.lastPathComponent). Grant access to the Applications folder (or this item) when prompted, then try again."

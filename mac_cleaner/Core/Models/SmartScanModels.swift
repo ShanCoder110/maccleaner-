@@ -222,7 +222,7 @@ enum SmartScanAggregator: Sendable {
                 explanation: "Installed applications. Review apps you may no longer need — not counted as automatic recovery.",
                 statusDetail: nil
             ),
-        ].sorted(by: categorySort)
+        ].sorted { categorySort($0, $1) }
 
         // Deduped global recoverables (apps excluded).
         var claimed = Set<String>()

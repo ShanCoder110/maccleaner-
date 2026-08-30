@@ -43,7 +43,7 @@ enum AppLegal {
     The app never requires Full Disk Access. It does not scan locations you have not authorized.
 
     Purchases
-    Monthly, yearly, and lifetime Pro purchases are processed by Apple through StoreKit. We do not receive your payment card number or Apple ID password. Manage or cancel subscriptions in System Settings → Apple ID → Subscriptions.
+    Monthly, yearly, and lifetime Pro purchases are processed by Apple through StoreKit. We do not receive your payment card number or Apple ID password.
 
     Data stored on this Mac
     Bookmarks, appearance, leftover-matching sensitivity, onboarding completion, and the local activity log stay on your Mac. They are not sent to us.

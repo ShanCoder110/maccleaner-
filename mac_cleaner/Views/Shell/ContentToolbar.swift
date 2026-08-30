@@ -10,6 +10,10 @@ struct ContentToolbar: View {
     var subtitle: String? = nil
     @Binding var searchText: String
     var searchPlaceholder: String = "Search"
+    var showsSearch: Bool = true
+    var showsAccessoryActions: Bool = true
+
+    @EnvironmentObject private var appState: AppState
 
     var body: some View {
         HStack(spacing: AppSpacing.md) {
@@ -27,11 +31,16 @@ struct ContentToolbar: View {
 
             Spacer(minLength: AppSpacing.lg)
 
-            SearchField(text: $searchText, placeholder: searchPlaceholder)
-                .frame(width: 240)
+            if showsSearch {
+                SearchField(text: $searchText, placeholder: searchPlaceholder)
+                    .frame(width: 240)
+            }
 
-            IconButton(systemName: "arrow.clockwise", help: "Refresh") {}
-            IconButton(systemName: "gearshape", help: "Settings") {}
+            if showsAccessoryActions {
+                IconButton(systemName: "gearshape", help: "Settings") {
+                    appState.selection = .settings
+                }
+            }
         }
         .padding(.horizontal, AppSpacing.contentInset)
         .padding(.vertical, AppSpacing.lg)

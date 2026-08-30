@@ -115,6 +115,10 @@ struct OrphansView: View {
                                                     .lineLimit(1)
                                             }
                                             Spacer()
+                                            if item.isRootOwned {
+                                                StatusBadge(title: "Root-owned", style: .danger)
+                                                    .help(FileOwnership.rootOwnedTooltip)
+                                            }
                                             StatusBadge(title: item.kind.title, style: item.kind.badgeStyle)
                                             SizeBadge(value: item.sizeLabel, emphasis: .prominent)
                                             IconButton(systemName: "folder", size: 28, iconSize: 11) {
@@ -161,11 +165,36 @@ struct OrphansView: View {
 
     private func clean() async {
         isCleaning = true
-        let urls = selected.map(\.url)
+        let selectedItems = selected
+        let urls = selectedItems.map(\.url)
+        
+        // Check for root-owned files and warn user
+        let rootOwnedItems = selectedItems.filter(\.isRootOwned)
+        
+        if !rootOwnedItems.isEmpty {
+            let names = rootOwnedItems.prefix(3).map(\.name).joined(separator: ", ")
+            let more = rootOwnedItems.count > 3 ? " and \(rootOwnedItems.count - 3) more" : ""
+            statusMessage = "⚠️ Cannot delete root-owned files: \(names)\(more). These require manual deletion with sudo in Terminal. See Activity log for commands."
+            
+            // Log terminal commands for each root-owned file
+            for item in rootOwnedItems {
+                await MainActor.run {
+                    appState.activityLog.log(.error, FileOwnership.rootOwnershipExplanation(for: item.url))
+                }
+            }
+            isCleaning = false
+            return
+        }
+        
         let result = await appState.cleaning.trash(urls: urls)
         let removed = Set(urls.filter { !FileManager.default.fileExists(atPath: $0.path) })
         appState.clearScanResultsAfterClean(removedURLs: removed)
-        statusMessage = "Moved \(result.trashedCount) items (\(ByteFormat.string(from: result.freedBytes)))."
+        
+        if !result.errors.isEmpty {
+            statusMessage = "⚠️ Moved \(result.trashedCount) items. \(result.errors.count) error(s) - see Activity log."
+        } else {
+            statusMessage = "✓ Moved \(result.trashedCount) items (\(ByteFormat.string(from: result.freedBytes)))."
+        }
         isCleaning = false
     }
 }

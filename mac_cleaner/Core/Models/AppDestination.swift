@@ -66,7 +66,7 @@ enum AppDestination: String, CaseIterable, Identifiable, Hashable {
     }
 }
 
-enum LeftoverSensitivity: String, CaseIterable, Identifiable, Codable, Sendable {
+nonisolated enum LeftoverSensitivity: String, CaseIterable, Identifiable, Codable, Sendable {
     case strict
     case enhanced
     case deep

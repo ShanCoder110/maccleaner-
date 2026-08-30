@@ -5,7 +5,7 @@
 
 import Foundation
 
-enum FileSizeCalculator: Sendable {
+nonisolated enum FileSizeCalculator: Sendable {
     static func size(of url: URL, maxDepth: Int? = nil) -> Int64 {
         var isDir: ObjCBool = false
         guard FileManager.default.fileExists(atPath: url.path, isDirectory: &isDir) else {

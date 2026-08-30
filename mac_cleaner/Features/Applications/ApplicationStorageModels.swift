@@ -9,7 +9,7 @@ import Foundation
 
 // MARK: - Match confidence (separate from deletion safety)
 
-enum MatchConfidence: String, Codable, CaseIterable, Identifiable, Hashable, Sendable {
+nonisolated enum MatchConfidence: String, Codable, CaseIterable, Identifiable, Hashable, Sendable {
     case confirmed
     case likely
     case possible
@@ -46,7 +46,7 @@ enum MatchConfidence: String, Codable, CaseIterable, Identifiable, Hashable, Sen
     }
 }
 
-enum MatchReason: String, Codable, CaseIterable, Identifiable, Hashable, Sendable {
+nonisolated enum MatchReason: String, Codable, CaseIterable, Identifiable, Hashable, Sendable {
     case appBundleItself
     case bundleIdentifier
     case exactAppName
@@ -108,7 +108,7 @@ enum MatchReason: String, Codable, CaseIterable, Identifiable, Hashable, Sendabl
     }
 }
 
-enum SafetyClassification: String, Codable, CaseIterable, Identifiable, Hashable, Sendable {
+nonisolated enum SafetyClassification: String, Codable, CaseIterable, Identifiable, Hashable, Sendable {
     case safeToRemove
     case reviewRecommended
     case sensitive

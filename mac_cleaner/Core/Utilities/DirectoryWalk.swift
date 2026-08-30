@@ -8,7 +8,7 @@
 
 import Foundation
 
-enum HiddenFilePolicy: Sendable, Equatable {
+nonisolated enum HiddenFilePolicy: Sendable, Equatable {
     case skipHidden
     case includeHidden
 
@@ -29,7 +29,7 @@ enum HiddenFilePolicy: Sendable, Equatable {
     }
 }
 
-enum DirectoryWalk: Sendable {
+nonisolated enum DirectoryWalk: Sendable {
     static let defaultFileCap = 80_000
 
     struct Options: Sendable {

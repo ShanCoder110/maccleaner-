@@ -69,7 +69,7 @@ struct DuplicateFinder: Sendable {
         }
 
         var groups: [DuplicateGroup] = []
-        var hitGroupLimit = false
+        let hitGroupLimit = false
 
         for (size, urls) in sizeMap where urls.count > 1 {
             if Task.isCancelled {

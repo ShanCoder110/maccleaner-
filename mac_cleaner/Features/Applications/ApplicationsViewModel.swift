@@ -274,7 +274,7 @@ final class ApplicationsViewModel {
     func handleDrop(providers: [NSItemProvider]) -> Bool {
         for provider in providers {
             _ = provider.loadObject(ofClass: URL.self) { [weak self] object, _ in
-                guard let url = object as? URL, url.pathExtension == "app" else { return }
+                guard let url = object, url.pathExtension == "app" else { return }
                 DispatchQueue.main.async {
                     self?.ingestDroppedApp(at: url)
                 }
