@@ -83,4 +83,84 @@ struct SmartScanAggregatorTests {
         #expect(built.summary.safeToRemoveSize == 0)
         #expect(built.summary.reviewRecommendedSize == 80 * 1024 * 1024)
     }
+    
+    @Test func unselectedLargeFilesNotCountedAsRecoverable() {
+        let selectedFile = StorageItem(
+            url: URL(fileURLWithPath: "/Users/me/Downloads/movie1.mp4"),
+            name: "movie1.mp4",
+            category: "Large Files",
+            byteSize: 2 * 1024 * 1024 * 1024,
+            isSelected: true,
+            isSensitive: false
+        )
+        let unselectedFile = StorageItem(
+            url: URL(fileURLWithPath: "/Users/me/Downloads/movie2.mp4"),
+            name: "movie2.mp4",
+            category: "Large Files",
+            byteSize: 3 * 1024 * 1024 * 1024,
+            isSelected: false,
+            isSensitive: false
+        )
+        
+        let built = SmartScanAggregator.build(
+            space: [],
+            large: [selectedFile, unselectedFile],
+            dupes: [],
+            orphans: [],
+            appCount: 0,
+            appBytes: 0,
+            coverageTitles: ["Downloads"],
+            warnings: [],
+            lastScanDate: Date(),
+            resultsMayBeStale: false
+        )
+        
+        // Only the selected file should be counted
+        #expect(built.summary.reviewRecommendedSize == 2 * 1024 * 1024 * 1024)
+        #expect(built.summary.totalDiscoveredSize == 2 * 1024 * 1024 * 1024)
+        
+        let largeCategory = built.summaries.first { $0.id == "large" }
+        #expect(largeCategory?.recoverableBytes == 2 * 1024 * 1024 * 1024)
+        #expect(largeCategory?.totalBytes == 5 * 1024 * 1024 * 1024)
+    }
+    
+    @Test func unselectedOrphansNotCountedAsRecoverable() {
+        let selectedOrphan = LeftoverItem(
+            url: URL(fileURLWithPath: "/Users/me/Library/Caches/com.removed.app"),
+            name: "com.removed.app",
+            byteSize: 50 * 1024 * 1024,
+            kind: .cache,
+            isSelected: true,
+            isSensitive: false
+        )
+        let unselectedOrphan = LeftoverItem(
+            url: URL(fileURLWithPath: "/Users/me/Library/Application Support/RemovedApp"),
+            name: "RemovedApp",
+            byteSize: 100 * 1024 * 1024,
+            kind: .applicationSupport,
+            isSelected: false,
+            isSensitive: false
+        )
+        
+        let built = SmartScanAggregator.build(
+            space: [],
+            large: [],
+            dupes: [],
+            orphans: [selectedOrphan, unselectedOrphan],
+            appCount: 0,
+            appBytes: 0,
+            coverageTitles: ["Library"],
+            warnings: [],
+            lastScanDate: Date(),
+            resultsMayBeStale: false
+        )
+        
+        // Only the selected orphan should be counted
+        #expect(built.summary.reviewRecommendedSize == 50 * 1024 * 1024)
+        #expect(built.summary.totalDiscoveredSize == 50 * 1024 * 1024)
+        
+        let orphansCategory = built.summaries.first { $0.id == "orphans" }
+        #expect(orphansCategory?.recoverableBytes == 50 * 1024 * 1024)
+        #expect(orphansCategory?.totalBytes == 150 * 1024 * 1024)
+    }
 }

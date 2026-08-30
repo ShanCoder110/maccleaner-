@@ -199,7 +199,7 @@ final class BookmarkStore: ObservableObject {
         case .preferences: return (home as NSString).appendingPathComponent("Library/Preferences")
         case .containers: return (home as NSString).appendingPathComponent("Library/Containers")
         case .developer: return (home as NSString).appendingPathComponent("Library/Developer")
-        case .homeAI: return home
+        case .homeAI: return nil // Let user choose specific AI tool folders instead of granting entire home
         case .downloads: return (home as NSString).appendingPathComponent("Downloads")
         case .documents: return (home as NSString).appendingPathComponent("Documents")
         case .desktop: return (home as NSString).appendingPathComponent("Desktop")

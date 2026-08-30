@@ -147,12 +147,14 @@ enum SmartScanAggregator: Sendable {
         let spaceRecoverable = spaceItems.filter { !$0.isSensitive }.reduce(Int64(0)) { $0 + $1.byteSize }
 
         let largeBytes = large.reduce(Int64(0)) { $0 + $1.byteSize }
+        let largeRecoverable = large.filter(\.isSelected).reduce(Int64(0)) { $0 + $1.byteSize }
 
         let dupeRecoverable = dupes.reduce(Int64(0)) { $0 + $1.recoverableBytes }
         let dupeGroupCount = dupes.count
         let dupeTotalSize = dupes.reduce(Int64(0)) { $0 + $1.totalSize }
 
         let orphanBytes = orphans.reduce(Int64(0)) { $0 + $1.byteSize }
+        let orphanRecoverable = orphans.filter(\.isSelected).reduce(Int64(0)) { $0 + $1.byteSize }
 
         let summaries: [SmartScanCategoryResult] = [
             SmartScanCategoryResult(
@@ -173,7 +175,7 @@ enum SmartScanAggregator: Sendable {
                 title: "Large Files",
                 systemImage: "doc.on.doc",
                 totalBytes: largeBytes,
-                recoverableBytes: largeBytes,
+                recoverableBytes: largeRecoverable,
                 itemCount: large.count,
                 progress: large.isEmpty ? 0.05 : 0.7,
                 destination: .largeFiles,
@@ -199,7 +201,7 @@ enum SmartScanAggregator: Sendable {
                 title: "App Leftovers",
                 systemImage: "tray",
                 totalBytes: orphanBytes,
-                recoverableBytes: orphanBytes,
+                recoverableBytes: orphanRecoverable,
                 itemCount: orphans.count,
                 progress: orphans.isEmpty ? 0.05 : 0.5,
                 destination: .orphans,
@@ -242,7 +244,7 @@ enum SmartScanAggregator: Sendable {
             }
         }
 
-        for item in large {
+        for item in large where item.isSelected {
             let key = canonicalPath(item.url)
             guard claimed.insert(key).inserted else { continue }
             reviewBytes += item.byteSize
@@ -258,7 +260,7 @@ enum SmartScanAggregator: Sendable {
             }
         }
 
-        for item in orphans {
+        for item in orphans where item.isSelected {
             let key = canonicalPath(item.url)
             guard claimed.insert(key).inserted else { continue }
             reviewBytes += item.byteSize
@@ -297,7 +299,7 @@ enum SmartScanAggregator: Sendable {
         return (summaries, summary)
     }
 
-    private static func contributesAsSafe(_ item: StorageItem) -> Bool {
+    static func contributesAsSafe(_ item: StorageItem) -> Bool {
         guard !item.isSensitive, item.isSelected else { return false }
 
         let category = item.category.lowercased()

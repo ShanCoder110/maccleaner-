@@ -17,7 +17,18 @@ struct CleaningService {
         let unique = Array(Set(urls.map(\.standardizedFileURL)))
         guard !unique.isEmpty else { return result }
 
-        let prepared = await MainActor.run { prepareScopedURLs(for: unique) }
+        // Filter URLs through allowlist before preparing scoped access
+        let allowed = await MainActor.run { unique.filter { isAllowed($0) } }
+        let blocked = unique.count - allowed.count
+        if blocked > 0 {
+            let message = "Blocked \(blocked) item\(blocked == 1 ? "" : "s") outside authorized folders."
+            result.errors.append(message)
+            await MainActor.run {
+                log.log(.error, message)
+            }
+        }
+
+        let prepared = await MainActor.run { prepareScopedURLs(for: allowed) }
 
         for (index, url) in prepared.enumerated() {
             let fraction = Double(index + 1) / Double(max(unique.count, 1))
@@ -129,6 +140,34 @@ struct CleaningService {
     func isAllowed(_ url: URL) -> Bool {
         let standardized = url.standardizedFileURL
         let resolved = standardized.resolvingSymlinksInPath()
+        
+        // Critical path denylist - never allow trashing these
+        let path = standardized.path
+        let deniedPaths = [
+            "/System",
+            "/Library",
+            "/Applications/Safari.app",
+            "/Applications/Mail.app",
+            "/Applications/Finder.app",
+            BookmarkStore.realUserHomePath() + "/Pictures",
+            BookmarkStore.realUserHomePath() + "/Music",
+            BookmarkStore.realUserHomePath() + "/Movies",
+            BookmarkStore.realUserHomePath() + "/Library/Keychains",
+            BookmarkStore.realUserHomePath() + "/.ssh",
+            BookmarkStore.realUserHomePath() + "/.aws",
+        ]
+        
+        for denied in deniedPaths {
+            if path == denied || path.hasPrefix(denied + "/") {
+                return false
+            }
+        }
+        
+        // Check for sensitive file extensions
+        let sensitiveExtensions = ["pem", "key", "p12", "pfx", "keychain"]
+        if sensitiveExtensions.contains(standardized.pathExtension.lowercased()) {
+            return false
+        }
 
         if bookmarks.containsPath(standardized.path) || bookmarks.containsPath(resolved.path) {
             return true

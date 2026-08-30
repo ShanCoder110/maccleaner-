@@ -10,8 +10,10 @@ import Combine
 final class SpaceResultsStore: ObservableObject {
     @Published var categories: [SpaceCategory] = []
 
+    /// Returns only safe, regenerable items that are selected and non-sensitive.
+    /// Aligns with "Clean X of safe junk" promise in UI.
     var junkItems: [StorageItem] {
-        categories.flatMap(\.items).filter { $0.isSelected && !$0.isSensitive }
+        categories.flatMap(\.items).filter { SmartScanAggregator.contributesAsSafe($0) }
     }
 
     var junkBytes: Int64 { junkItems.reduce(0) { $0 + $1.byteSize } }

@@ -63,7 +63,7 @@ struct DiskTreemapView: View {
                         ZStack(alignment: .topLeading) {
                             ForEach(rects) { rect in
                                 Button {
-                                    if !rect.node.children.isEmpty || rect.node.url.hasDirectoryPath {
+                                    if !rect.node.children.isEmpty || isDirectory(rect.node.url) {
                                         drill(into: rect.node)
                                     } else {
                                         appState.cleaning.reveal(rect.node.url)
@@ -168,6 +168,14 @@ struct DiskTreemapView: View {
 
     private func breadcrumb(for node: TreemapNode) -> String {
         ([rootNode?.name].compactMap { $0 } + pathStack.map(\.name)).joined(separator: " / ")
+    }
+
+    private func isDirectory(_ url: URL) -> Bool {
+        var isDir: ObjCBool = false
+        guard FileManager.default.fileExists(atPath: url.path, isDirectory: &isDir) else {
+            return false
+        }
+        return isDir.boolValue
     }
 
     private func color(for node: TreemapNode) -> Color {
