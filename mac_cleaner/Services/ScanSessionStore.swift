@@ -26,6 +26,8 @@ final class ScanSessionStore: ObservableObject {
     @Published var applicationsBytes: Int64 = 0
     @Published var coverageTitles: [String] = []
     @Published var scannerWarnings: [String] = []
+    /// Fires after a successful scan so the UI can play a completion moment.
+    @Published var completionToken: UUID?
 
     var hasResults: Bool {
         lastScanDate != nil
@@ -103,5 +105,9 @@ final class ScanSessionStore: ObservableObject {
         )
         categorySummaries = built.summaries
         summary = built.summary
+    }
+
+    func announceCompletion() {
+        completionToken = UUID()
     }
 }

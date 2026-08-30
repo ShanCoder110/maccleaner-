@@ -74,7 +74,7 @@ struct PrimaryButton: View {
             .padding(.horizontal, size.horizontalPadding)
             .background(
                 RoundedRectangle(cornerRadius: AppRadius.button, style: .continuous)
-                    .fill(backgroundFill)
+                    .fill(backgroundGradient)
             )
             .appShadow(isDisabled || isLoading ? AppShadow.soft : AppShadow.button)
             .scaleEffect(isPressed && !isDisabled ? 0.98 : 1)
@@ -100,9 +100,9 @@ struct PrimaryButton: View {
         .animation(.easeOut(duration: 0.15), value: isHovered)
     }
 
-    private var backgroundFill: Color {
-        if isDisabled { return AppColors.accent.opacity(0.7) }
-        return isHovered ? AppColors.accentHover : AppColors.accent
+    private var backgroundGradient: LinearGradient {
+        if isDisabled { return AppGradients.accentButtonDisabled }
+        return isHovered ? AppGradients.accentButtonHover : AppGradients.accentButton
     }
 }
 

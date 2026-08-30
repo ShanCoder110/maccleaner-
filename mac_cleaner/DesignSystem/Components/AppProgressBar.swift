@@ -19,7 +19,7 @@ struct AppProgressBar: View {
                         .fill(AppColors.progressTrack)
 
                     Capsule(style: .continuous)
-                        .fill(tint)
+                        .fill(progressFill)
                         .frame(width: max(height, geo.size.width * clampedProgress))
                         .animation(.easeInOut(duration: 0.35), value: progress)
                 }
@@ -38,6 +38,13 @@ struct AppProgressBar: View {
     private var clampedProgress: Double {
         min(max(progress, 0), 1)
     }
+
+    private var progressFill: AnyShapeStyle {
+        if tint == AppColors.accent {
+            return AnyShapeStyle(AppGradients.accentProgress)
+        }
+        return AnyShapeStyle(tint)
+    }
 }
 
 struct AppProgressRing: View {
@@ -55,7 +62,7 @@ struct AppProgressRing: View {
             Circle()
                 .trim(from: 0, to: clampedProgress)
                 .stroke(
-                    tint,
+                    ringStroke,
                     style: StrokeStyle(lineWidth: lineWidth, lineCap: .round)
                 )
                 .rotationEffect(.degrees(-90))
@@ -73,6 +80,13 @@ struct AppProgressRing: View {
 
     private var clampedProgress: Double {
         min(max(progress, 0), 1)
+    }
+
+    private var ringStroke: AnyShapeStyle {
+        if tint == AppColors.accent {
+            return AnyShapeStyle(AppGradients.accentProgress)
+        }
+        return AnyShapeStyle(tint)
     }
 }
 

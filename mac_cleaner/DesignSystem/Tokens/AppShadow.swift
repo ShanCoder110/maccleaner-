@@ -15,26 +15,34 @@ enum AppShadow {
 
     /// Soft elevation for cards on the canvas.
     static let card = Style(
-        color: Color.black.opacity(0.045),
-        radius: 12,
+        color: Color.black.opacity(0.07),
+        radius: 16,
         x: 0,
-        y: 4
+        y: 6
     )
 
     /// Slightly stronger lift for floating panels / popovers.
     static let elevated = Style(
-        color: Color.black.opacity(0.08),
-        radius: 20,
+        color: Color.black.opacity(0.10),
+        radius: 22,
         x: 0,
-        y: 8
+        y: 10
     )
 
     /// Subtle depth under primary buttons.
     static let button = Style(
-        color: Color(hex: 0x3B6FF5).opacity(0.28),
+        color: Color(hex: 0x3B6FF5).opacity(0.34),
+        radius: 12,
+        x: 0,
+        y: 5
+    )
+
+    /// Soft accent halo for focused fields and selected rows.
+    static let accentGlow = Style(
+        color: Color(hex: 0x3B6FF5).opacity(0.18),
         radius: 10,
         x: 0,
-        y: 4
+        y: 3
     )
 
     /// Near-invisible edge definition.

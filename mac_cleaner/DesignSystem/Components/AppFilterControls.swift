@@ -40,8 +40,9 @@ struct AppFilterChipGroup<T: Hashable>: View {
                 .frame(height: 30)
                 .background(
                     RoundedRectangle(cornerRadius: AppRadius.md, style: .continuous)
-                        .fill(isSelected ? AppColors.accent : (isHovered ? AppColors.surfaceHover : AppColors.controlFill))
+                        .fill(isSelected ? AnyShapeStyle(AppGradients.accentButton) : AnyShapeStyle(isHovered ? AppColors.surfaceHover : AppColors.controlFill))
                 )
+                .appShadow(isSelected ? AppShadow.button : AppShadow.soft)
                 .overlay(
                     RoundedRectangle(cornerRadius: AppRadius.md, style: .continuous)
                         .strokeBorder(isSelected ? Color.clear : AppColors.border, lineWidth: 1)

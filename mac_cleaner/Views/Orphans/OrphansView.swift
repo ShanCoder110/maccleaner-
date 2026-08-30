@@ -140,7 +140,7 @@ struct OrphansView: View {
             }
             .padding(AppSpacing.contentInset)
         }
-        .background(AppColors.background)
+        .background(Color.clear)
         .confirmationDialog("Move selected orphaned files to Trash?", isPresented: $confirmClean, titleVisibility: .visible) {
             Button("Move to Trash", role: .destructive) { Task { await clean() } }
             Button("Cancel", role: .cancel) {}

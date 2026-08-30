@@ -4,6 +4,7 @@
 //
 
 import Foundation
+import SwiftUI
 
 enum AppDestination: String, CaseIterable, Identifiable, Hashable {
     case smartScan
@@ -53,6 +54,20 @@ enum AppDestination: String, CaseIterable, Identifiable, Hashable {
 
     static var toolsGroup: [AppDestination] {
         [.activity, .settings]
+    }
+
+    /// Per-tool accent so screens don't all share the same blue.
+    var tint: Color {
+        switch self {
+        case .smartScan, .settings: return AppColors.accent
+        case .applications: return AppColors.toolPurple
+        case .spaceCleaner: return AppColors.success
+        case .largeFiles: return AppColors.warning
+        case .duplicates: return AppColors.toolTeal
+        case .spaceLens: return AppColors.toolIndigo
+        case .orphans: return AppColors.toolRose
+        case .activity: return AppColors.toolSlate
+        }
     }
 
     /// Features that require an active Pro subscription.

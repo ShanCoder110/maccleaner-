@@ -11,12 +11,20 @@ struct ContentToolbar: View {
     @Binding var searchText: String
     var searchPlaceholder: String = "Search"
     var showsSearch: Bool = true
-    var showsAccessoryActions: Bool = true
 
     @EnvironmentObject private var appState: AppState
+    @Environment(\.destinationTint) private var tint
 
     var body: some View {
         HStack(spacing: AppSpacing.md) {
+            AppIconTile(
+                systemName: appState.selection.systemImage,
+                size: 32,
+                iconSize: 14,
+                cornerRadius: 9,
+                style: .tint(tint)
+            )
+
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
                     .font(AppTypography.title)
@@ -35,17 +43,11 @@ struct ContentToolbar: View {
                 SearchField(text: $searchText, placeholder: searchPlaceholder)
                     .frame(width: 240)
             }
-
-            if showsAccessoryActions {
-                IconButton(systemName: "gearshape", help: "Settings") {
-                    appState.selection = .settings
-                }
-            }
         }
         .padding(.horizontal, AppSpacing.contentInset)
         .padding(.vertical, AppSpacing.lg)
         .frame(maxWidth: .infinity)
-        .background(AppColors.background)
+        .background(.clear)
         .overlay(alignment: .bottom) {
             Rectangle()
                 .fill(AppColors.borderSubtle)

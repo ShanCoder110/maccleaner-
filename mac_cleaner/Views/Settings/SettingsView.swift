@@ -28,8 +28,7 @@ struct SettingsView: View {
                     title: "Settings",
                     subtitle: "Personalize your MacCleaner+ experience",
                     searchText: .constant(""),
-                    showsSearch: false,
-                    showsAccessoryActions: false
+                    showsSearch: false
                 )
             }
 
@@ -47,7 +46,7 @@ struct SettingsView: View {
                 .padding(.vertical, AppSpacing.xl)
             }
         }
-        .background(AppColors.background)
+        .background(Color.clear)
         .sheet(isPresented: $showPrivacyPolicy) {
             PrivacyPolicyView()
         }

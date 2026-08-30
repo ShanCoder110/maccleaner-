@@ -36,13 +36,13 @@ enum AppColors {
     // MARK: - Surfaces
 
     static let background = Color.dynamic(
-        light: Color(hex: 0xF3F4F7),
-        dark: Color(hex: 0x12141A)
+        light: Color(hex: 0xF0F3F9),
+        dark: Color(hex: 0x11141B)
     )
 
     static let sidebarBackground = Color.dynamic(
-        light: Color(hex: 0xEBEDF2),
-        dark: Color(hex: 0x0E1015)
+        light: Color(hex: 0xE6EAF2),
+        dark: Color(hex: 0x0D1016)
     )
 
     static let surface = Color.dynamic(
@@ -166,6 +166,33 @@ enum AppColors {
     static let overlay = Color.dynamic(
         light: Color(hex: 0x000000).opacity(0.28),
         dark: Color(hex: 0x000000).opacity(0.45)
+    )
+
+    // MARK: - Tool identity
+
+    static let toolPurple = Color.dynamic(
+        light: Color(hex: 0x7C5CFC),
+        dark: Color(hex: 0xA78BFA)
+    )
+
+    static let toolTeal = Color.dynamic(
+        light: Color(hex: 0x0D9488),
+        dark: Color(hex: 0x2DD4BF)
+    )
+
+    static let toolIndigo = Color.dynamic(
+        light: Color(hex: 0x4F46E5),
+        dark: Color(hex: 0x818CF8)
+    )
+
+    static let toolRose = Color.dynamic(
+        light: Color(hex: 0xDB2777),
+        dark: Color(hex: 0xF472B6)
+    )
+
+    static let toolSlate = Color.dynamic(
+        light: Color(hex: 0x64748B),
+        dark: Color(hex: 0x94A3B8)
     )
 }
 

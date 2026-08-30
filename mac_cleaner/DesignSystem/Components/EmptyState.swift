@@ -14,17 +14,23 @@ struct EmptyState: View {
     var secondaryActionTitle: String? = nil
     var secondaryAction: (() -> Void)? = nil
 
+    @Environment(\.destinationTint) private var tint
+
     var body: some View {
         VStack(spacing: AppSpacing.lg) {
             ZStack {
-                RoundedRectangle(cornerRadius: AppRadius.xxl, style: .continuous)
-                    .fill(AppColors.accentSubtle)
-                    .frame(width: 72, height: 72)
+                Circle()
+                    .fill(tint.opacity(0.12))
+                    .frame(width: 108, height: 108)
+                    .blur(radius: 12)
 
-                Image(systemName: systemImage)
-                    .font(.system(size: 28, weight: .medium))
-                    .foregroundStyle(AppColors.accent)
-                    .symbolRenderingMode(.hierarchical)
+                AppIconTile(
+                    systemName: systemImage,
+                    size: 72,
+                    iconSize: 28,
+                    cornerRadius: AppRadius.xxl,
+                    style: .tint(tint)
+                )
             }
 
             VStack(spacing: AppSpacing.sm) {

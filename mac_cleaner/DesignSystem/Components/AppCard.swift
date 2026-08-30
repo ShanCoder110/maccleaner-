@@ -23,7 +23,7 @@ struct AppCard<Content: View>: View {
                 Group {
                     if showBorder {
                         RoundedRectangle(cornerRadius: radius, style: .continuous)
-                            .strokeBorder(AppColors.border, lineWidth: 1)
+                            .strokeBorder(AppGradients.cardEdge, lineWidth: 1)
                     }
                 }
             )
@@ -54,7 +54,8 @@ struct SelectableAppCard<Content: View>: View {
                     RoundedRectangle(cornerRadius: radius, style: .continuous)
                         .strokeBorder(borderColor, lineWidth: isSelected ? 1.5 : 1)
                 )
-                .appShadow(AppShadow.soft)
+                .appShadow(isSelected || isHovered ? AppShadow.card : AppShadow.soft)
+                .scaleEffect(isHovered ? 1.008 : 1)
                 .contentShape(RoundedRectangle(cornerRadius: radius, style: .continuous))
         }
         .buttonStyle(.plain)
@@ -73,5 +74,25 @@ struct SelectableAppCard<Content: View>: View {
 
     private var borderColor: Color {
         isSelected ? AppColors.accent.opacity(0.35) : AppColors.border
+    }
+}
+
+/// Light lift on hover for tappable rows that are not `SelectableAppCard`.
+struct AppHoverLift: ViewModifier {
+    @State private var isHovered = false
+
+    func body(content: Content) -> some View {
+        content
+            .scaleEffect(isHovered ? 1.01 : 1)
+            .animation(.easeOut(duration: 0.15), value: isHovered)
+            .onHover { hovering in
+                isHovered = hovering
+            }
+    }
+}
+
+extension View {
+    func appHoverLift() -> some View {
+        modifier(AppHoverLift())
     }
 }

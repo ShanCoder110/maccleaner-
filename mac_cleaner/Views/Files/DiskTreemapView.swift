@@ -79,7 +79,7 @@ struct DiskTreemapView: View {
             }
             .padding(AppSpacing.contentInset)
         }
-        .background(AppColors.background)
+        .background(Color.clear)
     }
 
     @ViewBuilder

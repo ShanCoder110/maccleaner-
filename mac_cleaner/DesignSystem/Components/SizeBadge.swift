@@ -27,7 +27,10 @@ struct SizeBadge: View {
             )
             .overlay(
                 RoundedRectangle(cornerRadius: AppRadius.badge, style: .continuous)
-                    .strokeBorder(AppColors.borderSubtle, lineWidth: 1)
+                    .strokeBorder(
+                        emphasis == .accent ? AppColors.accent.opacity(0.22) : AppColors.borderSubtle,
+                        lineWidth: 1
+                    )
             )
     }
 

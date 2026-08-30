@@ -10,6 +10,7 @@ struct SidebarItem: View {
     let systemImage: String
     var badge: String? = nil
     var isSelected: Bool = false
+    var tint: Color = AppColors.accent
     let action: () -> Void
 
     @State private var isHovered = false
@@ -17,10 +18,16 @@ struct SidebarItem: View {
     var body: some View {
         Button(action: action) {
             HStack(spacing: AppSpacing.sm) {
-                Image(systemName: systemImage)
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(isSelected ? AppColors.accent : AppColors.textSecondary)
-                    .frame(width: 20)
+                ZStack {
+                    RoundedRectangle(cornerRadius: 6, style: .continuous)
+                        .fill(isSelected ? AnyShapeStyle(AppGradients.icon(from: tint)) : AnyShapeStyle(Color.clear))
+                        .frame(width: 22, height: 22)
+
+                    Image(systemName: systemImage)
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(isSelected ? Color.white : AppColors.textSecondary)
+                }
+                .frame(width: 22, height: 22)
 
                 Text(title)
                     .font(AppTypography.bodyMedium)
@@ -32,12 +39,12 @@ struct SidebarItem: View {
                 if let badge {
                     Text(badge)
                         .font(AppTypography.micro)
-                        .foregroundStyle(isSelected ? AppColors.accent : AppColors.textTertiary)
+                        .foregroundStyle(isSelected ? tint : AppColors.textTertiary)
                         .padding(.horizontal, 6)
                         .padding(.vertical, 2)
                         .background(
                             Capsule(style: .continuous)
-                                .fill(isSelected ? AppColors.accentMuted : AppColors.controlFillSecondary)
+                                .fill(isSelected ? tint.opacity(0.14) : AppColors.controlFillSecondary)
                         )
                 }
             }
@@ -58,7 +65,7 @@ struct SidebarItem: View {
     }
 
     private var backgroundFill: Color {
-        if isSelected { return AppColors.surfaceSelected }
+        if isSelected { return tint.opacity(0.12) }
         if isHovered { return AppColors.surfaceHover }
         return Color.clear
     }

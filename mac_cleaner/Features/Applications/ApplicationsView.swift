@@ -68,7 +68,7 @@ struct ApplicationsView: View {
             }
             .padding(AppSpacing.contentInset)
         }
-        .background(AppColors.background)
+        .background(Color.clear)
         .onDrop(of: [.fileURL], isTargeted: nil, perform: model.handleDrop)
         .onAppear {
             model.attach(appState)

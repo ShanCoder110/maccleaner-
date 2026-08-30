@@ -71,7 +71,7 @@ struct RootView: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(AppColors.background.ignoresSafeArea())
+        .appCanvas()
         .background(WindowChromeConfigurator(background: AppColors.background))
         .themedWindowToolbar()
         .preferredColorScheme(appState.preferredColorScheme)

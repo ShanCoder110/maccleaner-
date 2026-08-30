@@ -113,7 +113,7 @@ struct SpaceCleanerView: View {
             }
             .padding(AppSpacing.contentInset)
         }
-        .background(AppColors.background)
+        .background(Color.clear)
         .confirmationDialog(
             "Move selected items to Trash?",
             isPresented: $confirmClean,
@@ -132,7 +132,7 @@ struct SpaceCleanerView: View {
                 } label: {
                     HStack {
                         Image(systemName: category.wrappedValue.systemImage)
-                            .foregroundStyle(AppColors.accent)
+                            .foregroundStyle(AppDestination.spaceCleaner.tint)
                         VStack(alignment: .leading, spacing: 2) {
                             Text(category.wrappedValue.title)
                                 .font(AppTypography.headline)

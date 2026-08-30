@@ -94,7 +94,7 @@ struct ActivityLogView: View {
             }
             .padding(AppSpacing.contentInset)
         }
-        .background(AppColors.background)
+        .background(Color.clear)
     }
 
     private func label(for kind: ActivityKind) -> String {

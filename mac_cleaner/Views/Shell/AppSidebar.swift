@@ -10,7 +10,6 @@ struct AppSidebar: View {
     @EnvironmentObject private var subscription: SubscriptionStore
     @EnvironmentObject private var bookmarks: BookmarkStore
     @Binding var selection: AppDestination
-    var onOpenSettings: () -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -29,7 +28,8 @@ struct AppSidebar: View {
                             title: destination.title,
                             systemImage: destination.systemImage,
                             badge: destination.requiresPro && !subscription.isPro ? "Pro" : nil,
-                            isSelected: selection == destination
+                            isSelected: selection == destination,
+                            tint: destination.tint
                         ) {
                             selection = destination
                         }
@@ -42,7 +42,8 @@ struct AppSidebar: View {
                         SidebarItem(
                             title: destination.title,
                             systemImage: destination.systemImage,
-                            isSelected: selection == destination
+                            isSelected: selection == destination,
+                            tint: destination.tint
                         ) {
                             selection = destination
                         }
@@ -64,7 +65,13 @@ struct AppSidebar: View {
         .frame(width: AppSpacing.sidebarWidth)
         .frame(maxHeight: .infinity)
         // Extend under the transparent title bar so the top matches the theme.
-        .background(AppColors.sidebarBackground.ignoresSafeArea(edges: .top))
+        .background {
+            ZStack {
+                AppColors.sidebarBackground
+                AppGradients.sidebarWash
+            }
+            .ignoresSafeArea(edges: .top)
+        }
         .overlay(alignment: .trailing) {
             Rectangle()
                 .fill(AppColors.border)
@@ -80,16 +87,13 @@ struct AppSidebar: View {
 
     private var brandHeader: some View {
         HStack(spacing: AppSpacing.sm) {
-            ZStack {
-                RoundedRectangle(cornerRadius: 9, style: .continuous)
-                    .fill(AppColors.accent)
-                    .frame(width: 30, height: 30)
-                    .appShadow(AppShadow.button)
-
-                Image(systemName: "internaldrive")
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(.white)
-            }
+            AppIconTile(
+                systemName: "internaldrive",
+                size: 30,
+                iconSize: 13,
+                cornerRadius: 9,
+                style: .accent
+            )
 
             VStack(alignment: .leading, spacing: 1) {
                 Text("MacCleaner+")
@@ -102,8 +106,6 @@ struct AppSidebar: View {
             }
 
             Spacer(minLength: 0)
-
-            IconButton(systemName: "gearshape", size: 28, iconSize: 12, help: "Settings", action: onOpenSettings)
         }
     }
 
@@ -111,9 +113,13 @@ struct AppSidebar: View {
         AppCard(padding: AppSpacing.md, radius: AppRadius.xl, showShadow: false) {
             VStack(alignment: .leading, spacing: AppSpacing.sm) {
                 HStack(spacing: AppSpacing.xs) {
-                    Image(systemName: subscription.isPro ? "crown.fill" : "sparkles")
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundStyle(AppColors.accent)
+                    AppIconTile(
+                        systemName: subscription.isPro ? "crown.fill" : "sparkles",
+                        size: 22,
+                        iconSize: 10,
+                        cornerRadius: 7,
+                        style: .accent
+                    )
                     Text(subscription.isPro ? "Pro" : "Upgrade to Pro")
                         .font(AppTypography.bodyMedium)
                         .foregroundStyle(AppColors.textPrimary)

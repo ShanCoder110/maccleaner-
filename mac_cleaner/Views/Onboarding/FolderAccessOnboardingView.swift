@@ -23,18 +23,17 @@ struct FolderAccessOnboardingView: View {
 
     var body: some View {
         ZStack {
-            AppColors.background.ignoresSafeArea()
+            AppCanvasBackground()
 
             VStack(spacing: AppSpacing.xxl) {
                 VStack(spacing: AppSpacing.md) {
-                    ZStack {
-                        RoundedRectangle(cornerRadius: AppRadius.xxl, style: .continuous)
-                            .fill(AppColors.accentMuted)
-                            .frame(width: 72, height: 72)
-                        Image(systemName: "folder.badge.plus")
-                            .font(.system(size: 28, weight: .semibold))
-                            .foregroundStyle(AppColors.accent)
-                    }
+                    AppIconTile(
+                        systemName: "folder.badge.plus",
+                        size: 72,
+                        iconSize: 28,
+                        cornerRadius: AppRadius.xxl,
+                        style: .accent
+                    )
 
                     Text("Welcome to MacCleaner+")
                         .font(AppTypography.title)
@@ -187,8 +186,13 @@ struct FolderAccessBanner: View {
     var body: some View {
         if !bookmarks.hasAnyAccess {
             HStack(spacing: AppSpacing.md) {
-                Image(systemName: "folder.badge.questionmark")
-                    .foregroundStyle(AppColors.warning)
+                AppIconTile(
+                    systemName: "folder.badge.questionmark",
+                    size: 36,
+                    iconSize: 14,
+                    cornerRadius: AppRadius.md,
+                    style: .warning
+                )
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Folder access required")
                         .font(AppTypography.bodyMedium)

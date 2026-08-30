@@ -10,14 +10,21 @@ struct SmartScanScanningCard: View {
     @EnvironmentObject private var session: ScanSessionStore
 
     var body: some View {
-        AppCard(radius: AppRadius.xxxl) {
+        AppCard(padding: AppSpacing.xxl, radius: AppRadius.xxxl) {
             HStack(alignment: .top, spacing: AppSpacing.xxl) {
                 ZStack {
                     Circle()
-                        .fill(AppColors.accentMuted.opacity(0.55))
-                        .frame(width: 118, height: 118)
-                        .scaleEffect(1.06)
-                        .animation(.easeInOut(duration: 1.1).repeatForever(autoreverses: true), value: session.isScanning)
+                        .fill(AppColors.accent.opacity(0.14))
+                        .frame(width: 148, height: 148)
+                        .blur(radius: 16)
+                        .scaleEffect(session.isScanning ? 1.08 : 1)
+                        .animation(
+                            .easeInOut(duration: 1.2).repeatForever(autoreverses: true),
+                            value: session.isScanning
+                        )
+                    Circle()
+                        .fill(AppColors.accentMuted)
+                        .frame(width: 124, height: 124)
                     AppProgressRing(
                         progress: session.progress,
                         lineWidth: 8,
@@ -25,32 +32,52 @@ struct SmartScanScanningCard: View {
                         showsPercent: true
                     )
                 }
-                .frame(width: 118, height: 118)
+                .frame(width: 148, height: 148)
 
                 VStack(alignment: .leading, spacing: AppSpacing.md) {
                     StatusBadge(
-                        title: "Scanning \(session.progressPercent)%",
+                        title: "Scanning · \(session.progressPercent)%",
                         style: .info,
                         icon: "circle.dotted"
                     )
+
                     Text("Scanning your Mac…")
                         .font(AppTypography.title)
                         .foregroundStyle(AppColors.textPrimary)
+
                     Text(session.progressLabel)
                         .font(AppTypography.callout)
                         .foregroundStyle(AppColors.textSecondary)
 
-                    VStack(alignment: .leading, spacing: AppSpacing.xs) {
-                        ForEach(session.scanStages) { stage in
+                    AppProgressBar(progress: session.progress, height: 5)
+                        .padding(.trailing, AppSpacing.xxl)
+
+                    VStack(spacing: 0) {
+                        ForEach(Array(session.scanStages.enumerated()), id: \.element.id) { index, stage in
                             stageRow(stage)
+                            if index < session.scanStages.count - 1 {
+                                Rectangle()
+                                    .fill(AppColors.borderSubtle)
+                                    .frame(height: 1)
+                                    .padding(.leading, 28)
+                            }
                         }
                     }
-                    .padding(.top, AppSpacing.xs)
+                    .padding(.vertical, AppSpacing.xs)
+                    .background(
+                        RoundedRectangle(cornerRadius: AppRadius.lg, style: .continuous)
+                            .fill(AppColors.surfaceSecondary)
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: AppRadius.lg, style: .continuous)
+                            .strokeBorder(AppColors.borderSubtle, lineWidth: 1)
+                    )
 
                     SecondaryButton(title: "Cancel", icon: "xmark", size: .compact) {
                         appState.cancelSmartScan()
                     }
                 }
+
                 Spacer(minLength: 0)
             }
         }
@@ -63,15 +90,23 @@ struct SmartScanScanningCard: View {
                 .foregroundStyle(stageColor(stage.status))
                 .frame(width: 16)
             Text(stage.title)
-                .font(AppTypography.callout)
-                .foregroundStyle(AppColors.textPrimary)
-            Spacer()
+                .font(AppTypography.calloutMedium)
+                .foregroundStyle(
+                    stage.status == .pending ? AppColors.textTertiary : AppColors.textPrimary
+                )
+            Spacer(minLength: 0)
             if let detail = stage.detail {
                 Text(detail)
                     .font(AppTypography.caption)
                     .foregroundStyle(AppColors.textTertiary)
+                    .monospacedDigit()
+            } else if stage.status == .running {
+                ProgressView()
+                    .controlSize(.mini)
             }
         }
+        .padding(.horizontal, AppSpacing.md)
+        .padding(.vertical, AppSpacing.sm)
     }
 
     private func stageIcon(_ status: SmartScanStageStatus) -> String {
@@ -99,76 +134,154 @@ struct SmartScanResultHero: View {
     @EnvironmentObject private var appState: AppState
     @EnvironmentObject private var session: ScanSessionStore
 
+    @State private var appeared = false
+    @State private var checkPulse = false
+
     private var summary: SmartScanSummary { session.summary }
 
     var body: some View {
-        AppCard(radius: AppRadius.xxxl) {
-            VStack(alignment: .leading, spacing: AppSpacing.lg) {
-                StatusBadge(
-                    title: summary.hasMeaningfulRecovery ? "Scan complete" : "You're all caught up",
-                    style: summary.hasMeaningfulRecovery ? .success : .info,
-                    icon: summary.hasMeaningfulRecovery ? "checkmark.circle.fill" : "sparkles"
-                )
+        AppCard(padding: AppSpacing.xxl, radius: AppRadius.xxxl) {
+            HStack(alignment: .top, spacing: AppSpacing.xl) {
+                VStack(alignment: .leading, spacing: AppSpacing.sm) {
+                    HStack(spacing: AppSpacing.sm) {
+                        ZStack {
+                            Circle()
+                                .fill(AppColors.success.opacity(0.16))
+                                .frame(width: 28, height: 28)
+                                .scaleEffect(checkPulse ? 1.35 : 1)
+                                .opacity(checkPulse ? 0.25 : 0.7)
 
-                if summary.hasMeaningfulRecovery {
-                    Text("You can recover")
-                        .font(AppTypography.callout)
-                        .foregroundStyle(AppColors.textSecondary)
-                    Text(ByteFormat.string(from: summary.recoverableSize))
-                        .font(AppTypography.largeTitle)
-                        .foregroundStyle(AppColors.textPrimary)
-                        .monospacedDigit()
+                            Image(systemName: summary.hasMeaningfulRecovery ? "checkmark.circle.fill" : "sparkles")
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundStyle(summary.hasMeaningfulRecovery ? AppColors.success : AppColors.accent)
+                                .scaleEffect(appeared ? 1 : 0.4)
+                        }
 
-                    HStack(spacing: AppSpacing.xl) {
-                        recoveryStat(ByteFormat.string(from: summary.safeToRemoveSize), "safe to remove", AppColors.success)
-                        recoveryStat(ByteFormat.string(from: summary.reviewRecommendedSize), "review recommended", AppColors.warning)
+                        StatusBadge(
+                            title: summary.hasMeaningfulRecovery ? "Scan complete" : "All caught up",
+                            style: summary.hasMeaningfulRecovery ? .success : .info,
+                            icon: summary.hasMeaningfulRecovery ? "checkmark.circle.fill" : "sparkles"
+                        )
                     }
-                } else {
-                    Text("You're all caught up")
-                        .font(AppTypography.title)
-                        .foregroundStyle(AppColors.textPrimary)
-                    Text("No significant cleanup opportunities were found in your authorized folders.")
-                        .font(AppTypography.callout)
-                        .foregroundStyle(AppColors.textSecondary)
-                }
 
-                if let date = summary.lastScanDate {
-                    Text("Last scanned · \(date.formatted(date: .abbreviated, time: .shortened))")
-                        .font(AppTypography.caption)
-                        .foregroundStyle(AppColors.textTertiary)
-                }
-
-                HStack(spacing: AppSpacing.sm) {
                     if summary.hasMeaningfulRecovery {
-                        PrimaryButton(title: "Review Cleanup", icon: "arrow.right") {
-                            if let first = summary.topOpportunities.first?.destination {
-                                appState.navigate(to: first)
-                            } else {
-                                appState.navigate(to: .spaceCleaner)
+                        Text("You can recover")
+                            .font(AppTypography.callout)
+                            .foregroundStyle(AppColors.textSecondary)
+                        Text(ByteFormat.string(from: summary.recoverableSize))
+                            .font(AppTypography.largeTitle)
+                            .foregroundStyle(AppGradients.accentButton)
+                            .monospacedDigit()
+                    } else {
+                        Text("You're all caught up")
+                            .font(AppTypography.title)
+                            .foregroundStyle(AppColors.textPrimary)
+                        Text("No significant cleanup opportunities in your authorized folders.")
+                            .font(AppTypography.callout)
+                            .foregroundStyle(AppColors.textSecondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .frame(maxWidth: 420, alignment: .leading)
+                    }
+
+                    HStack(spacing: AppSpacing.sm) {
+                        if summary.hasMeaningfulRecovery {
+                            PrimaryButton(title: "Review Cleanup", icon: "arrow.right", size: .large) {
+                                if let first = summary.topOpportunities.first?.destination {
+                                    appState.navigate(to: first)
+                                } else {
+                                    appState.navigate(to: .spaceCleaner)
+                                }
                             }
                         }
+                        SecondaryButton(title: "Scan Again", icon: "arrow.clockwise") {
+                            Task { await appState.runSmartScan() }
+                        }
+                        SecondaryButton(title: "Permissions", icon: "folder.badge.plus") {
+                            appState.openManagePermissions()
+                        }
                     }
-                    SecondaryButton(title: "Scan Again", icon: "arrow.clockwise") {
-                        Task { await appState.runSmartScan() }
-                    }
-                    SecondaryButton(title: "Manage Permissions", icon: "folder.badge.plus") {
-                        appState.openManagePermissions()
-                    }
+                    .padding(.top, AppSpacing.xs)
                 }
+
+                Spacer(minLength: AppSpacing.md)
+
+                if summary.hasMeaningfulRecovery {
+                    VStack(spacing: AppSpacing.sm) {
+                        recoveryStatCard(
+                            value: ByteFormat.string(from: summary.safeToRemoveSize),
+                            label: "Safe to remove",
+                            color: AppColors.success,
+                            fill: AppColors.successMuted,
+                            icon: "checkmark.shield.fill"
+                        )
+                        recoveryStatCard(
+                            value: ByteFormat.string(from: summary.reviewRecommendedSize),
+                            label: "Review recommended",
+                            color: AppColors.warning,
+                            fill: AppColors.warningMuted,
+                            icon: "eye.fill"
+                        )
+                    }
+                    .frame(width: 200)
+                }
+            }
+        }
+        .opacity(appeared ? 1 : 0)
+        .offset(y: appeared ? 0 : 10)
+        .onAppear {
+            withAnimation(.spring(response: 0.5, dampingFraction: 0.84)) {
+                appeared = true
+            }
+            withAnimation(.easeOut(duration: 0.7).repeatCount(2, autoreverses: true)) {
+                checkPulse = true
             }
         }
     }
 
-    private func recoveryStat(_ value: String, _ label: String, _ color: Color) -> some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text(value)
-                .font(AppTypography.headline)
-                .foregroundStyle(color)
-                .monospacedDigit()
-            Text(label)
-                .font(AppTypography.caption)
-                .foregroundStyle(AppColors.textTertiary)
+    private func recoveryStatCard(
+        value: String,
+        label: String,
+        color: Color,
+        fill: Color,
+        icon: String
+    ) -> some View {
+        HStack(spacing: AppSpacing.sm) {
+            ZStack {
+                RoundedRectangle(cornerRadius: AppRadius.sm, style: .continuous)
+                    .fill(fill)
+                    .frame(width: 32, height: 32)
+                Image(systemName: icon)
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(color)
+            }
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(value)
+                    .font(AppTypography.headline)
+                    .foregroundStyle(color)
+                    .monospacedDigit()
+                Text(label)
+                    .font(AppTypography.caption)
+                    .foregroundStyle(AppColors.textTertiary)
+                    .lineLimit(1)
+            }
+            Spacer(minLength: 0)
         }
+        .padding(AppSpacing.md)
+        .background(
+            RoundedRectangle(cornerRadius: AppRadius.lg, style: .continuous)
+                .fill(fill.opacity(0.55))
+        )
+        .overlay(alignment: .leading) {
+            RoundedRectangle(cornerRadius: 2, style: .continuous)
+                .fill(color)
+                .frame(width: 3)
+                .padding(.vertical, AppSpacing.sm)
+        }
+        .overlay(
+            RoundedRectangle(cornerRadius: AppRadius.lg, style: .continuous)
+                .strokeBorder(color.opacity(0.18), lineWidth: 1)
+        )
     }
 }
 
@@ -180,43 +293,58 @@ struct SmartScanJunkCard: View {
     var onClean: () -> Void
 
     var body: some View {
-        AppCard(radius: AppRadius.xxl) {
-            HStack(spacing: AppSpacing.lg) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: AppRadius.md, style: .continuous)
-                        .fill(AppColors.successMuted)
-                        .frame(width: 44, height: 44)
-                    Image(systemName: "trash")
-                        .foregroundStyle(AppColors.success)
-                }
+        HStack(spacing: AppSpacing.lg) {
+            ZStack {
+                RoundedRectangle(cornerRadius: AppRadius.md, style: .continuous)
+                    .fill(AppColors.successMuted)
+                    .frame(width: 48, height: 48)
+                Image(systemName: "trash.fill")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(AppColors.success)
+            }
 
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Clean \(ByteFormat.string(from: scanResults.space.junkBytes)) of safe junk")
-                        .font(AppTypography.headline)
-                        .foregroundStyle(AppColors.textPrimary)
-                    Text("\(scanResults.space.junkItemCount) selected regenerable items · backups and Docker stay unchecked")
-                        .font(AppTypography.callout)
-                        .foregroundStyle(AppColors.textSecondary)
-                }
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Clean \(ByteFormat.string(from: scanResults.space.junkBytes)) of safe junk")
+                    .font(AppTypography.headline)
+                    .foregroundStyle(AppColors.textPrimary)
+                Text("\(scanResults.space.junkItemCount) regenerable items selected · backups and Docker stay unchecked")
+                    .font(AppTypography.callout)
+                    .foregroundStyle(AppColors.textSecondary)
+            }
 
-                Spacer()
+            Spacer(minLength: AppSpacing.md)
 
-                SizeBadge(value: ByteFormat.string(from: scanResults.space.junkBytes), emphasis: .accent)
+            SizeBadge(value: ByteFormat.string(from: scanResults.space.junkBytes), emphasis: .accent)
 
-                PrimaryButton(
-                    title: "Clean Junk",
-                    icon: "trash",
-                    isLoading: isCleaning,
-                    isDisabled: scanResults.space.junkItemCount == 0 || session.isScanning,
-                    size: .compact,
-                    action: onClean
-                )
+            PrimaryButton(
+                title: "Clean Junk",
+                icon: "trash",
+                isLoading: isCleaning,
+                isDisabled: scanResults.space.junkItemCount == 0 || session.isScanning,
+                size: .compact,
+                action: onClean
+            )
 
-                SecondaryButton(title: "Review", size: .compact) {
-                    appState.navigate(to: .spaceCleaner)
-                }
+            SecondaryButton(title: "Review", size: .compact) {
+                appState.navigate(to: .spaceCleaner)
             }
         }
+        .padding(AppSpacing.lg)
+        .background(
+            RoundedRectangle(cornerRadius: AppRadius.xxl, style: .continuous)
+                .fill(AppColors.surface)
+        )
+        .overlay(alignment: .leading) {
+            RoundedRectangle(cornerRadius: 2, style: .continuous)
+                .fill(AppColors.success)
+                .frame(width: 3)
+                .padding(.vertical, AppSpacing.md)
+        }
+        .overlay(
+            RoundedRectangle(cornerRadius: AppRadius.xxl, style: .continuous)
+                .strokeBorder(AppColors.success.opacity(0.2), lineWidth: 1)
+        )
+        .appShadow(AppShadow.card)
     }
 }
 
@@ -227,37 +355,71 @@ struct SmartScanOpportunitiesSection: View {
 
     private var summary: SmartScanSummary { session.summary }
 
+    private var filtered: [SmartScanOpportunity] {
+        summary.topOpportunities.filter {
+            searchText.isEmpty || $0.title.localizedCaseInsensitiveContains(searchText)
+        }
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: AppSpacing.md) {
             SectionHeader(
                 title: "Biggest opportunities",
-                subtitle: "Where your attention is most valuable"
+                subtitle: "Start where you’ll recover the most"
             )
 
             VStack(spacing: AppSpacing.sm) {
-                ForEach(summary.topOpportunities.filter {
-                    searchText.isEmpty || $0.title.localizedCaseInsensitiveContains(searchText)
-                }) { item in
-                    AppCard(padding: AppSpacing.md, radius: AppRadius.xl, showShadow: false) {
-                        HStack(spacing: AppSpacing.md) {
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text(item.title)
-                                    .font(AppTypography.bodyMedium)
-                                    .foregroundStyle(AppColors.textPrimary)
-                                StatusBadge(title: item.safety.shortTitle, style: item.safety.badgeStyle)
-                            }
-                            Spacer()
-                            SizeBadge(value: item.sizeLabel, emphasis: .accent)
-                            SecondaryButton(title: "Review", size: .compact) {
-                                if let destination = item.destination {
-                                    appState.navigate(to: destination)
-                                }
-                            }
-                        }
-                    }
+                ForEach(Array(filtered.enumerated()), id: \.element.id) { index, item in
+                    opportunityRow(item, rank: index + 1)
                 }
             }
         }
+    }
+
+    private func opportunityRow(_ item: SmartScanOpportunity, rank: Int) -> some View {
+        Button {
+            if let destination = item.destination {
+                appState.navigate(to: destination)
+            }
+        } label: {
+            HStack(spacing: AppSpacing.md) {
+                Text("\(rank)")
+                    .font(AppTypography.captionMedium)
+                    .foregroundStyle(item.destination?.tint ?? AppColors.accent)
+                    .frame(width: 28, height: 28)
+                    .background(
+                        RoundedRectangle(cornerRadius: AppRadius.sm, style: .continuous)
+                            .fill((item.destination?.tint ?? AppColors.accent).opacity(0.14))
+                    )
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(item.title)
+                        .font(AppTypography.bodyMedium)
+                        .foregroundStyle(AppColors.textPrimary)
+                    StatusBadge(title: item.safety.shortTitle, style: item.safety.badgeStyle)
+                }
+
+                Spacer(minLength: 0)
+
+                SizeBadge(value: item.sizeLabel, emphasis: .accent)
+
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(AppColors.textTertiary)
+            }
+            .padding(AppSpacing.md)
+            .background(
+                RoundedRectangle(cornerRadius: AppRadius.xl, style: .continuous)
+                    .fill(AppColors.surface)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: AppRadius.xl, style: .continuous)
+                    .strokeBorder(AppColors.border, lineWidth: 1)
+            )
+            .contentShape(RoundedRectangle(cornerRadius: AppRadius.xl, style: .continuous))
+        }
+        .buttonStyle(.plain)
+        .appHoverLift()
     }
 }
 
@@ -268,28 +430,42 @@ struct SmartScanCategoriesGrid: View {
 
     private var summary: SmartScanSummary { session.summary }
 
+    private var visibleCategories: [SmartScanCategoryResult] {
+        session.categorySummaries.filter { category in
+            let matchesSearch = searchText.isEmpty
+                || category.title.localizedCaseInsensitiveContains(searchText)
+            let hasContent = category.id == "apps"
+                ? category.itemCount > 0
+                : category.itemCount > 0 && category.recoverableBytes > 0
+            return matchesSearch && hasContent
+        }
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: AppSpacing.md) {
             SectionHeader(
                 title: "Cleanup categories",
                 subtitle: summary.folderAccessLimited
-                    ? "Some categories are limited because their folders are not authorized."
-                    : "Open a category to review — results stay available when you navigate away"
+                    ? "Some categories are limited — authorize more folders to expand coverage."
+                    : "Open a category to review items"
             )
 
-            LazyVGrid(
-                columns: [GridItem(.flexible(), spacing: AppSpacing.md), GridItem(.flexible(), spacing: AppSpacing.md)],
-                spacing: AppSpacing.md
-            ) {
-                ForEach(session.categorySummaries.filter { category in
-                    let matchesSearch = searchText.isEmpty
-                        || category.title.localizedCaseInsensitiveContains(searchText)
-                    let hasContent = category.id == "apps"
-                        ? category.itemCount > 0
-                        : category.itemCount > 0 && category.recoverableBytes > 0
-                    return matchesSearch && hasContent
-                }) { category in
-                    categoryCard(category)
+            if visibleCategories.isEmpty {
+                Text(searchText.isEmpty ? "No categories with recoverable items." : "No categories match your search.")
+                    .font(AppTypography.callout)
+                    .foregroundStyle(AppColors.textSecondary)
+                    .padding(.vertical, AppSpacing.sm)
+            } else {
+                LazyVGrid(
+                    columns: [
+                        GridItem(.flexible(), spacing: AppSpacing.md),
+                        GridItem(.flexible(), spacing: AppSpacing.md),
+                    ],
+                    spacing: AppSpacing.md
+                ) {
+                    ForEach(visibleCategories) { category in
+                        categoryCard(category)
+                    }
                 }
             }
         }
@@ -301,57 +477,91 @@ struct SmartScanCategoriesGrid: View {
                 appState.navigate(to: destination)
             }
         } label: {
-            AppCard(padding: AppSpacing.lg, radius: AppRadius.xxl) {
-                VStack(alignment: .leading, spacing: AppSpacing.sm) {
-                    HStack {
-                        ZStack {
-                            RoundedRectangle(cornerRadius: AppRadius.md, style: .continuous)
-                                .fill(AppColors.accentMuted)
-                                .frame(width: 36, height: 36)
-                            Image(systemName: category.systemImage)
-                                .foregroundStyle(AppColors.accent)
-                        }
-                        Spacer()
-                        if category.id == "apps" {
-                            Text("\(category.itemCount) apps")
-                                .font(AppTypography.caption)
-                                .foregroundStyle(AppColors.textTertiary)
-                        } else {
-                            SizeBadge(
-                                value: category.recoverableBytes > 0 ? category.recoverableLabel : category.sizeLabel,
-                                emphasis: .prominent
-                            )
-                        }
-                    }
+            VStack(alignment: .leading, spacing: AppSpacing.md) {
+                HStack(alignment: .top) {
+                    AppIconTile(
+                        systemName: category.systemImage,
+                        size: 40,
+                        iconSize: 15,
+                        cornerRadius: AppRadius.md,
+                        style: .tint(category.destination?.tint ?? AppColors.accent)
+                    )
 
+                    Spacer(minLength: 0)
+
+                    if category.id == "apps" {
+                        Text("\(category.itemCount)")
+                            .font(AppTypography.monoCaption)
+                            .foregroundStyle(AppColors.textSecondary)
+                            .padding(.horizontal, AppSpacing.sm)
+                            .padding(.vertical, AppSpacing.xxs)
+                            .background(
+                                Capsule(style: .continuous)
+                                    .fill(AppColors.controlFillSecondary)
+                            )
+                    } else {
+                        SizeBadge(
+                            value: category.recoverableBytes > 0 ? category.recoverableLabel : category.sizeLabel,
+                            emphasis: .prominent
+                        )
+                    }
+                }
+
+                VStack(alignment: .leading, spacing: AppSpacing.xs) {
                     Text(category.title)
                         .font(AppTypography.headline)
                         .foregroundStyle(AppColors.textPrimary)
 
-                    if category.id != "apps" {
-                        Text("\(category.itemCount) items")
-                            .font(AppTypography.caption)
-                            .foregroundStyle(AppColors.textTertiary)
+                    HStack(spacing: AppSpacing.xs) {
+                        StatusBadge(title: category.safety.shortTitle, style: category.safety.badgeStyle)
+                        if category.id != "apps" {
+                            Text("·")
+                                .foregroundStyle(AppColors.textTertiary)
+                            Text("\(category.itemCount) items")
+                                .font(AppTypography.caption)
+                                .foregroundStyle(AppColors.textTertiary)
+                        } else {
+                            Text("·")
+                                .foregroundStyle(AppColors.textTertiary)
+                            Text("apps")
+                                .font(AppTypography.caption)
+                                .foregroundStyle(AppColors.textTertiary)
+                        }
                     }
-
-                    StatusBadge(title: category.safety.title, style: category.safety.badgeStyle)
 
                     Text(category.explanation)
                         .font(AppTypography.caption)
                         .foregroundStyle(AppColors.textSecondary)
                         .fixedSize(horizontal: false, vertical: true)
-                        .lineLimit(3)
+                        .lineLimit(2)
+                        .frame(minHeight: 32, alignment: .topLeading)
+                }
 
-                    HStack {
-                        Spacer()
-                        Text("Review")
-                            .font(AppTypography.captionMedium)
-                            .foregroundStyle(AppColors.accent)
-                    }
+                HStack(spacing: AppSpacing.xxs) {
+                    Text("Review")
+                        .font(AppTypography.captionMedium)
+                        .foregroundStyle(AppColors.accent)
+                    Image(systemName: "arrow.right")
+                        .font(.system(size: 9, weight: .bold))
+                        .foregroundStyle(AppColors.accent)
+                    Spacer(minLength: 0)
                 }
             }
+            .padding(AppSpacing.lg)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(
+                RoundedRectangle(cornerRadius: AppRadius.xxl, style: .continuous)
+                    .fill(AppColors.surface)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: AppRadius.xxl, style: .continuous)
+                    .strokeBorder(AppColors.border, lineWidth: 1)
+            )
+            .appShadow(AppShadow.card)
+            .contentShape(RoundedRectangle(cornerRadius: AppRadius.xxl, style: .continuous))
         }
         .buttonStyle(.plain)
+        .appHoverLift()
         .disabled(session.isScanning)
     }
 }
@@ -363,30 +573,47 @@ struct SmartScanCoverageCard: View {
     private var summary: SmartScanSummary { session.summary }
 
     var body: some View {
-        AppCard(padding: AppSpacing.lg, radius: AppRadius.xxl, showShadow: false) {
-            VStack(alignment: .leading, spacing: AppSpacing.sm) {
+        HStack(alignment: .center, spacing: AppSpacing.md) {
+            ZStack {
+                RoundedRectangle(cornerRadius: AppRadius.sm, style: .continuous)
+                    .fill(AppColors.controlFillSecondary)
+                    .frame(width: 32, height: 32)
+                Image(systemName: "folder.fill")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(AppColors.textSecondary)
+            }
+
+            VStack(alignment: .leading, spacing: 2) {
                 Text("Coverage")
-                    .font(AppTypography.headline)
+                    .font(AppTypography.calloutMedium)
                     .foregroundStyle(AppColors.textPrimary)
 
                 if summary.coverageTitles.isEmpty {
-                    Text("No authorized folders yet. Applications were still listed from /Applications.")
-                        .font(AppTypography.callout)
-                        .foregroundStyle(AppColors.textSecondary)
+                    Text("No authorized folders yet — apps still listed from /Applications.")
+                        .font(AppTypography.caption)
+                        .foregroundStyle(AppColors.textTertiary)
                 } else {
-                    Text("Scanned \(summary.coverageTitles.count) authorized location\(summary.coverageTitles.count == 1 ? "" : "s")")
-                        .font(AppTypography.callout)
-                        .foregroundStyle(AppColors.textSecondary)
                     Text(summary.coverageTitles.joined(separator: " · "))
                         .font(AppTypography.caption)
                         .foregroundStyle(AppColors.textTertiary)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-
-                SecondaryButton(title: "Manage Permissions", icon: "folder.badge.plus", size: .compact) {
-                    appState.openManagePermissions()
+                        .lineLimit(2)
                 }
             }
+
+            Spacer(minLength: 0)
+
+            SecondaryButton(title: "Manage", icon: "folder.badge.plus", size: .compact) {
+                appState.openManagePermissions()
+            }
         }
+        .padding(AppSpacing.md)
+        .background(
+            RoundedRectangle(cornerRadius: AppRadius.xl, style: .continuous)
+                .fill(AppColors.surfaceSecondary)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: AppRadius.xl, style: .continuous)
+                .strokeBorder(AppColors.borderSubtle, lineWidth: 1)
+        )
     }
 }

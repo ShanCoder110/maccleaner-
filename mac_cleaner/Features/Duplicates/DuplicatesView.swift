@@ -153,7 +153,7 @@ struct DuplicatesView: View {
             }
             .padding(AppSpacing.contentInset)
         }
-        .background(AppColors.background)
+        .background(Color.clear)
         .confirmationDialog(
             "Move selected duplicates to Trash?",
             isPresented: $confirmClean,

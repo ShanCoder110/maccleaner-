@@ -47,7 +47,7 @@ struct SearchField: View {
             RoundedRectangle(cornerRadius: AppRadius.control, style: .continuous)
                 .strokeBorder(borderColor, lineWidth: isFocused ? 1.5 : 1)
         )
-        .appShadow(isFocused ? AppShadow.soft : AppShadow.soft)
+        .appShadow(isFocused ? AppShadow.accentGlow : AppShadow.soft)
         .onHover { hovering in
             withAnimation(.easeOut(duration: 0.15)) {
                 isHovered = hovering

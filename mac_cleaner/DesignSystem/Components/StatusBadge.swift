@@ -55,6 +55,10 @@ struct StatusBadge: View {
             Capsule(style: .continuous)
                 .fill(style.background)
         )
+        .overlay(
+            Capsule(style: .continuous)
+                .strokeBorder(style.foreground.opacity(0.16), lineWidth: 1)
+        )
     }
 }
 

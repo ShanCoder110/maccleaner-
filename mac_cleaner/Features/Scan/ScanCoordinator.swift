@@ -128,6 +128,7 @@ enum ScanCoordinator {
                 warnings: warnings
             )
             session.rebuildSummaries(from: results)
+            session.announceCompletion()
         } catch is CancellationError {
             session.markCancelled()
         } catch {
