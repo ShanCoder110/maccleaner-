@@ -5,6 +5,7 @@
 
 import SwiftUI
 import StoreKit
+import AppKit
 
 private enum PaywallPlanKind: String, CaseIterable {
     case monthly
@@ -323,19 +324,19 @@ struct PaywallView: View {
     private var ctaBlock: some View {
         VStack(spacing: AppSpacing.sm) {
             Button {
-                Task {
+                Task { @MainActor in
                     if isCurrentPlan {
-                        // Open Apple's subscription management page
                         if let url = URL(string: "https://apps.apple.com/account/subscriptions") {
                             NSWorkspace.shared.open(url)
                         }
-                    } else {
-                        guard let product = selectedProduct else { return }
-                        let ok = await subscription.purchase(product)
-                        if ok {
-                            appState.handlePaywallPurchaseSuccess()
-                            dismiss()
-                        }
+                        return
+                    }
+                    guard let product = selectedProduct else { return }
+                    let ok = await subscription.purchase(product)
+                    if ok {
+                        // Force-dismiss via binding; Environment dismiss can fail while
+                        // the system StoreKit sheet is still tearing down.
+                        appState.handlePaywallPurchaseSuccess()
                     }
                 }
             } label: {
@@ -374,11 +375,10 @@ struct PaywallView: View {
             .appShadow(AppShadow.button)
 
             SecondaryButton(title: "Restore Purchases", size: .compact) {
-                Task {
+                Task { @MainActor in
                     await subscription.restore()
                     if subscription.isPro {
                         appState.handlePaywallPurchaseSuccess()
-                        dismiss()
                     }
                 }
             }
@@ -396,7 +396,16 @@ struct PaywallView: View {
         if isCurrentPlan {
             return "Manage Subscription"
         }
-        
+        if subscription.isPro {
+            switch planKind {
+            case .monthly:
+                return "Switch to Monthly"
+            case .annual:
+                return "Switch to Annual"
+            case .lifetime:
+                return "Upgrade to Lifetime"
+            }
+        }
         switch planKind {
         case .monthly:
             return subscription.isEligibleForIntroOffer ? "Start 3-Day Free Trial" : "Continue with Monthly"

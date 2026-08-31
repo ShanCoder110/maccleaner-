@@ -106,6 +106,7 @@ final class AppState: ObservableObject {
     }
 
     func handlePaywallPurchaseSuccess() {
+        showPaywall = false
         if let pending = pendingProDestination {
             selection = pending
             pendingProDestination = nil

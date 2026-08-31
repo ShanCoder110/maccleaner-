@@ -48,13 +48,25 @@ final class SubscriptionStore: ObservableObject {
 
     var statusLabel: String {
         if isPro {
-            if activeProductID == Self.lifetimeProductID {
+            switch activeProductID {
+            case Self.lifetimeProductID:
                 return "Pro · Lifetime"
+            case Self.yearlyProductID:
+                if let expirationDate {
+                    return "Pro · Annual · renews \(expirationDate.formatted(date: .abbreviated, time: .omitted))"
+                }
+                return "Pro · Annual"
+            case Self.monthlyProductID:
+                if let expirationDate {
+                    return "Pro · Monthly · renews \(expirationDate.formatted(date: .abbreviated, time: .omitted))"
+                }
+                return "Pro · Monthly"
+            default:
+                if let expirationDate {
+                    return "Pro · renews \(expirationDate.formatted(date: .abbreviated, time: .omitted))"
+                }
+                return "Pro active"
             }
-            if let expirationDate {
-                return "Pro · renews \(expirationDate.formatted(date: .abbreviated, time: .omitted))"
-            }
-            return "Pro active"
         }
         if isEligibleForIntroOffer {
             return "Free · 3-day trial available"
@@ -90,9 +102,11 @@ final class SubscriptionStore: ObservableObject {
             switch result {
             case .success(let verification):
                 let transaction = try checkVerified(verification)
+                apply(transaction)
                 await transaction.finish()
-                await updateEntitlements()
-                return isPro
+                await updateEntitlements(fallback: transaction)
+                await updateIntroEligibility()
+                return true
             case .userCancelled:
                 return false
             case .pending:
@@ -116,6 +130,7 @@ final class SubscriptionStore: ObservableObject {
         do {
             try await AppStore.sync()
             await updateEntitlements()
+            await updateIntroEligibility()
             if !isPro {
                 purchaseError = "No active subscription found."
             }
@@ -134,31 +149,56 @@ final class SubscriptionStore: ObservableObject {
     #endif
 
     @MainActor
-    private func updateEntitlements() async {
-        var entitled = false
-        var expiry: Date?
-        var productID: String?
+    private func apply(_ transaction: Transaction) {
+        isPro = true
+        activeProductID = transaction.productID
+        if transaction.productID == Self.lifetimeProductID {
+            expirationDate = nil
+        } else {
+            expirationDate = transaction.expirationDate
+        }
+    }
+
+    @MainActor
+    private func updateEntitlements(fallback: Transaction? = nil) async {
+        var bestTransaction: Transaction?
+        var bestRank = -1
 
         for await result in Transaction.currentEntitlements {
             guard case .verified(let transaction) = result else { continue }
             guard Self.productIDs.contains(transaction.productID) else { continue }
             if transaction.revocationDate != nil { continue }
-            entitled = true
-            productID = transaction.productID
-            expiry = transaction.expirationDate
-            if transaction.productID == Self.lifetimeProductID {
-                expiry = nil
+
+            let rank = Self.rank(for: transaction.productID)
+            if rank >= bestRank {
+                bestRank = rank
+                bestTransaction = transaction
             }
         }
 
-        isPro = entitled
-        expirationDate = expiry
-        activeProductID = productID
+        if let bestTransaction {
+            apply(bestTransaction)
+        } else if let fallback {
+            // Entitlements can lag right after purchase; keep the verified transaction.
+            apply(fallback)
+        } else {
+            isPro = false
+            activeProductID = nil
+            expirationDate = nil
+        }
+    }
+
+    private static func rank(for productID: String) -> Int {
+        switch productID {
+        case lifetimeProductID: return 3
+        case yearlyProductID: return 2
+        case monthlyProductID: return 1
+        default: return 0
+        }
     }
 
     @MainActor
     private func updateIntroEligibility() async {
-        // Prefer monthly (primary trial plan); fall back to yearly.
         if let monthly = monthlyProduct, let sub = monthly.subscription {
             isEligibleForIntroOffer = await sub.isEligibleForIntroOffer
             return
@@ -176,6 +216,9 @@ final class SubscriptionStore: ObservableObject {
                 guard let self else { return }
                 if case .verified(let transaction) = result {
                     await transaction.finish()
+                    await MainActor.run {
+                        self.apply(transaction)
+                    }
                     await self.updateEntitlements()
                 }
             }

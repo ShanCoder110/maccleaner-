@@ -25,100 +25,121 @@ struct FolderAccessOnboardingView: View {
         ZStack {
             AppCanvasBackground()
 
-            VStack(spacing: AppSpacing.xxl) {
-                VStack(spacing: AppSpacing.md) {
-                    AppIconTile(
-                        systemName: "folder.badge.plus",
-                        size: 72,
-                        iconSize: 28,
-                        cornerRadius: AppRadius.xxl,
-                        style: .accent
-                    )
+            ScrollView(showsIndicators: true) {
+                VStack(spacing: AppSpacing.xxl) {
+                    header
+                    permissionsCard
+                        .frame(maxWidth: 560)
 
-                    Text("Welcome to MacCleaner+")
-                        .font(AppTypography.title)
-                        .foregroundStyle(AppColors.textPrimary)
-
-                    Text("macOS will show a folder picker so you can grant access. Scan and clean only run in folders you approve. Grant Applications to uninstall apps to Trash.")
-                        .font(AppTypography.callout)
-                        .foregroundStyle(AppColors.textSecondary)
-                        .multilineTextAlignment(.center)
-                        .frame(maxWidth: 520)
-                }
-
-                AppCard(radius: AppRadius.xxxl) {
-                    VStack(spacing: AppSpacing.sm) {
-                        ForEach(presets, id: \.self) { kind in
-                            presetRow(kind)
-                        }
-
-                        Divider().opacity(0.3)
-
-                        ForEach(appPresets, id: \.self) { kind in
-                            presetRow(kind, subtitle: appSubtitle(for: kind))
-                        }
-
-                        Divider().opacity(0.3)
-
-                        HStack {
-                            SecondaryButton(title: "Add Custom Folder", icon: "folder.badge.plus") {
-                                prompt(for: .custom)
-                            }
-                            Spacer()
-                            SecondaryButton(title: "AI Tool Folders", icon: "brain") {
-                                prompt(for: .homeAI)
-                            }
-                        }
-
-                        if !isGranted(.caches) {
-                            PrimaryButton(
-                                title: "Grant Caches Access Now",
-                                icon: "hand.raised.fill"
-                            ) {
-                                prompt(for: .caches)
-                            }
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                        } else if !isGranted(.applicationsSystem) {
-                            PrimaryButton(
-                                title: "Grant Applications Access",
-                                icon: "square.grid.2x2"
-                            ) {
-                                prompt(for: .applicationsSystem)
-                            }
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                        }
+                    if !statusMessage.isEmpty {
+                        Text(statusMessage)
+                            .font(AppTypography.caption)
+                            .foregroundStyle(AppColors.textSecondary)
+                            .multilineTextAlignment(.center)
+                            .frame(maxWidth: 560)
                     }
-                }
-                .frame(maxWidth: 560)
 
-                if !statusMessage.isEmpty {
-                    Text(statusMessage)
-                        .font(AppTypography.caption)
-                        .foregroundStyle(AppColors.textSecondary)
+                    footerActions
                 }
-
-                HStack(spacing: AppSpacing.md) {
-                    SecondaryButton(title: "Skip for Now") {
-                        appState.markOnboardingComplete()
-                    }
-                    PrimaryButton(
-                        title: bookmarks.hasAnyAccess ? "Continue" : "Continue Without Folders",
-                        icon: "arrow.right"
-                    ) {
-                        appState.markOnboardingComplete()
-                    }
-                }
+                .padding(.horizontal, AppSpacing.xxl)
+                .padding(.vertical, AppSpacing.xxl)
+                .frame(maxWidth: 640)
+                .frame(maxWidth: .infinity)
             }
-            .padding(AppSpacing.xxxl)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .onAppear {
-            // Automatically present the system folder permission picker once on launch.
             guard !didAutoPrompt else { return }
             didAutoPrompt = true
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
                 prompt(for: .caches)
             }
         }
+    }
+
+    private var header: some View {
+        VStack(spacing: AppSpacing.md) {
+            AppIconTile(
+                systemName: "folder.badge.plus",
+                size: 64,
+                iconSize: 26,
+                cornerRadius: AppRadius.xxl,
+                style: .accent
+            )
+
+            Text("Welcome to MacCleaner+")
+                .font(AppTypography.title)
+                .foregroundStyle(AppColors.textPrimary)
+                .multilineTextAlignment(.center)
+
+            Text("macOS will show a folder picker so you can grant access. Scan and clean only run in folders you approve. Grant Applications to uninstall apps to Trash.")
+                .font(AppTypography.callout)
+                .foregroundStyle(AppColors.textSecondary)
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: 520)
+        }
+    }
+
+    private var permissionsCard: some View {
+        AppCard(radius: AppRadius.xxxl) {
+            VStack(spacing: AppSpacing.sm) {
+                ForEach(presets, id: \.self) { kind in
+                    presetRow(kind)
+                }
+
+                Divider().opacity(0.3)
+
+                ForEach(appPresets, id: \.self) { kind in
+                    presetRow(kind, subtitle: appSubtitle(for: kind))
+                }
+
+                Divider().opacity(0.3)
+
+                HStack {
+                    SecondaryButton(title: "Add Custom Folder", icon: "folder.badge.plus") {
+                        prompt(for: .custom)
+                    }
+                    Spacer()
+                    SecondaryButton(title: "AI Tool Folders", icon: "brain") {
+                        prompt(for: .homeAI)
+                    }
+                }
+
+                if !isGranted(.caches) {
+                    PrimaryButton(
+                        title: "Grant Caches Access Now",
+                        icon: "hand.raised.fill"
+                    ) {
+                        prompt(for: .caches)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                } else if !isGranted(.applicationsSystem) {
+                    PrimaryButton(
+                        title: "Grant Applications Access",
+                        icon: "square.grid.2x2"
+                    ) {
+                        prompt(for: .applicationsSystem)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
+            }
+        }
+    }
+
+    private var footerActions: some View {
+        HStack(spacing: AppSpacing.md) {
+            SecondaryButton(title: "Skip for Now") {
+                appState.markOnboardingComplete()
+            }
+            PrimaryButton(
+                title: bookmarks.hasAnyAccess ? "Continue" : "Continue Without Folders",
+                icon: "arrow.right"
+            ) {
+                appState.markOnboardingComplete()
+            }
+        }
+        .padding(.bottom, AppSpacing.lg)
     }
 
     private func presetRow(_ kind: GrantedFolder.Kind, subtitle: String? = nil) -> some View {
@@ -168,7 +189,6 @@ struct FolderAccessOnboardingView: View {
     }
 
     private func prompt(for kind: GrantedFolder.Kind) {
-        // Ensure we are key window before presenting NSOpenPanel.
         NSApp.activate(ignoringOtherApps: true)
         if let folder = bookmarks.ensurePresetAccess(kind: kind) {
             statusMessage = "Access granted for \(folder.kind.title)."
