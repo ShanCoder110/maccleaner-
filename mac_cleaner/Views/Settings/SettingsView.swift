@@ -12,13 +12,10 @@ struct SettingsView: View {
     @EnvironmentObject private var bookmarks: BookmarkStore
     @EnvironmentObject private var subscription: SubscriptionStore
     var showsToolbar: Bool = true
-    @State private var showPrivacyPolicy = false
     @State private var isRestoring = false
 
     private var appVersion: String {
-        let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
-        let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "1"
-        return "\(version) (\(build))"
+        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
     }
 
     var body: some View {
@@ -47,9 +44,6 @@ struct SettingsView: View {
             }
         }
         .background(Color.clear)
-        .sheet(isPresented: $showPrivacyPolicy) {
-            PrivacyPolicyView()
-        }
     }
 
     // MARK: - Membership
@@ -349,10 +343,11 @@ struct SettingsView: View {
                     .fixedSize(horizontal: false, vertical: true)
 
                 VStack(spacing: 0) {
-                    aboutLinkRow(title: "Privacy Policy", icon: "hand.raised.fill", isLast: false) {
-                        showPrivacyPolicy = true
+                    Link(destination: AppLegal.hostedPrivacyPolicyURL) {
+                        aboutLinkLabel(title: "Privacy Policy", icon: "hand.raised.fill", isLast: false)
                     }
-                    
+                    .buttonStyle(.plain)
+
                     Link(destination: AppLegal.termsOfUseURL) {
                         aboutLinkLabel(title: "Terms of Use", icon: "doc.text.fill", isLast: false)
                     }
@@ -364,22 +359,13 @@ struct SettingsView: View {
                     .buttonStyle(.plain)
                 }
 
-                HStack {
-                    Text("Version \(appVersion)")
-                        .font(AppTypography.caption)
-                        .foregroundStyle(AppColors.textTertiary)
-                        .monospacedDigit()
-                    Spacer()
-                }
+                Text("Version \(appVersion)")
+                    .font(AppTypography.caption)
+                    .foregroundStyle(AppColors.textTertiary)
+                    .monospacedDigit()
+                    .frame(maxWidth: .infinity, alignment: .center)
             }
         }
-    }
-
-    private func aboutLinkRow(title: String, icon: String, isLast: Bool, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            aboutLinkLabel(title: title, icon: icon, isLast: isLast)
-        }
-        .buttonStyle(.plain)
     }
 
     private func aboutLinkLabel(title: String, icon: String, isLast: Bool) -> some View {

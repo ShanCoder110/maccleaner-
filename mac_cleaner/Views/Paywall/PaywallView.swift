@@ -29,7 +29,6 @@ struct PaywallView: View {
     @State private var appeared = false
     @State private var shimmer = false
     @State private var featureVisible: [Bool] = Array(repeating: false, count: 5)
-    @State private var showPrivacyPolicy = false
 
     private var selectedProduct: Product? {
         switch planKind {
@@ -96,9 +95,6 @@ struct PaywallView: View {
                 shimmer = true
             }
             Task { await subscription.refresh() }
-        }
-        .sheet(isPresented: $showPrivacyPolicy) {
-            PrivacyPolicyView()
         }
     }
 
@@ -414,10 +410,7 @@ struct PaywallView: View {
     private var legalFooter: some View {
         VStack(spacing: AppSpacing.sm) {
             HStack(spacing: AppSpacing.md) {
-                Button("Privacy Policy") {
-                    showPrivacyPolicy = true
-                }
-                .buttonStyle(.plain)
+                Link("Privacy Policy", destination: AppLegal.hostedPrivacyPolicyURL)
                 Text("·")
                     .foregroundStyle(AppColors.textTertiary)
                 Link("Terms of Use", destination: AppLegal.termsOfUseURL)
