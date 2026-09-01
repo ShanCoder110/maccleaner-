@@ -10,7 +10,7 @@
       "internalID" : "1000000003",
       "localizations" : [
         {
-          "description" : "One-time purchase for MacCleaner+ forever.",
+          "description" : "One-time purchase for Mac Cleaner: Clean Up Storage forever.",
           "displayName" : "Pro Lifetime",
           "locale" : "en_US"
         }
@@ -37,7 +37,7 @@
       "localizations" : [
 
       ],
-      "name" : "MacCleaner+",
+      "name" : "Mac Cleaner",
       "subscriptions" : [
         {
           "adHocOffers" : [

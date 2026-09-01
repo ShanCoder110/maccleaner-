@@ -23,7 +23,7 @@ struct SettingsView: View {
             if showsToolbar {
                 ContentToolbar(
                     title: "Settings",
-                    subtitle: "Personalize your MacCleaner+ experience",
+                    subtitle: "Personalize your \(AppLegal.shortName) experience",
                     searchText: .constant(""),
                     showsSearch: false
                 )
@@ -337,12 +337,17 @@ struct SettingsView: View {
             )
         ) {
             VStack(alignment: .leading, spacing: AppSpacing.md) {
-                Text("MacCleaner+ is a sandboxed storage manager — not a speed booster or security tool.")
-                    .font(AppTypography.callout)
-                    .foregroundStyle(AppColors.textSecondary)
-                    .fixedSize(horizontal: false, vertical: true)
+                // Text("\(AppLegal.displayName) is a sandboxed storage manager — not a speed booster or security tool.")
+                //     .font(AppTypography.callout)
+                //     .foregroundStyle(AppColors.textSecondary)
+                //     .fixedSize(horizontal: false, vertical: true)
 
                 VStack(spacing: 0) {
+                    Link(destination: AppLegal.rateUsURL) {
+                        aboutLinkLabel(title: "Rate Us", icon: "star.fill", isLast: false)
+                    }
+                    .buttonStyle(.plain)
+
                     Link(destination: AppLegal.hostedPrivacyPolicyURL) {
                         aboutLinkLabel(title: "Privacy Policy", icon: "hand.raised.fill", isLast: false)
                     }

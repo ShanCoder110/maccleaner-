@@ -11,7 +11,7 @@ import Foundation
 enum AppStoreReviewNotes {
     /// Guideline 2.4.5(i) sandbox + temporary exception justification.
     static let trashExceptionJustification = """
-    MacCleaner+ is fully sandboxed (com.apple.security.app-sandbox). It only \
+    Mac Cleaner: Clean Up Storage is fully sandboxed (com.apple.security.app-sandbox). It only \
     scans folders the user grants through NSOpenPanel and persists those grants \
     with app-scoped security-scoped bookmarks.
 

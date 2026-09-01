@@ -4,6 +4,7 @@
 //
 
 import SwiftUI
+import AppKit
 
 struct AppSidebar: View {
     @EnvironmentObject private var appState: AppState
@@ -87,20 +88,20 @@ struct AppSidebar: View {
 
     private var brandHeader: some View {
         HStack(spacing: AppSpacing.sm) {
-            AppIconTile(
-                systemName: "internaldrive",
-                size: 30,
-                iconSize: 13,
-                cornerRadius: 9,
-                style: .accent
-            )
+            Image(nsImage: NSApp.applicationIconImage)
+                .resizable()
+                .interpolation(.high)
+                .aspectRatio(contentMode: .fit)
+                .frame(width: 40, height: 40)
+                .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
+                .shadow(color: .black.opacity(0.12), radius: 3, x: 0, y: 1)
 
             VStack(alignment: .leading, spacing: 1) {
-                Text("MacCleaner+")
+                Text(AppLegal.shortName)
                     .font(AppTypography.headline)
                     .foregroundStyle(AppColors.textPrimary)
 
-                Text("Clean smarter")
+                Text("Clean Smarter")
                     .font(AppTypography.caption)
                     .foregroundStyle(AppColors.textTertiary)
             }

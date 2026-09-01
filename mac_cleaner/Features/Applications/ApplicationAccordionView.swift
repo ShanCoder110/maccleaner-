@@ -158,7 +158,7 @@ struct ApplicationAccordionView: View {
         let missing = model.missingRecommendedKinds
 
         return VStack(alignment: .leading, spacing: AppSpacing.sm) {
-            Text("No related files were found in the folders currently available to MacCleaner+.")
+            Text("No related files were found in the folders currently available to \(AppLegal.displayName).")
                 .font(AppTypography.callout)
                 .foregroundStyle(AppColors.textSecondary)
 

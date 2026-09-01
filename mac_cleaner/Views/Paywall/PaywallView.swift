@@ -100,11 +100,22 @@ struct PaywallView: View {
     }
 
     private var topBar: some View {
-        HStack {
-            Text("MacCleaner+")
+        HStack(spacing: AppSpacing.sm) {
+            Image(nsImage: NSApp.applicationIconImage)
+                .resizable()
+                .interpolation(.high)
+                .aspectRatio(contentMode: .fit)
+                .frame(width: 46, height: 46)
+                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                .shadow(color: .black.opacity(0.12), radius: 3, x: 0, y: 1)
+
+            Text(AppLegal.displayName)
                 .font(AppTypography.title)
                 .foregroundStyle(AppColors.textPrimary)
-            Spacer()
+                .lineLimit(1)
+
+            Spacer(minLength: AppSpacing.md)
+
             IconButton(systemName: "xmark", size: 32, iconSize: 12, help: "Close") {
                 dismiss()
             }

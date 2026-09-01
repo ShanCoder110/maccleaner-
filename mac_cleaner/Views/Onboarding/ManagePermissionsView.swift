@@ -83,7 +83,7 @@ struct ManagePermissionsView: View {
                 Text("Manage Permissions")
                     .font(AppTypography.headline)
                     .foregroundStyle(AppColors.textPrimary)
-                Text("MacCleaner+ only scans and cleans inside folders you authorize.")
+                Text("\(AppLegal.displayName) only scans and cleans inside folders you authorize.")
                     .font(AppTypography.caption)
                     .foregroundStyle(AppColors.textSecondary)
             }

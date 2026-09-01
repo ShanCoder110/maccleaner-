@@ -67,7 +67,7 @@ struct FolderAccessOnboardingView: View {
                 style: .accent
             )
 
-            Text("Welcome to MacCleaner+")
+            Text("Welcome to \(AppLegal.displayName)")
                 .font(AppTypography.title)
                 .foregroundStyle(AppColors.textPrimary)
                 .multilineTextAlignment(.center)

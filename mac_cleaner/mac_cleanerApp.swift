@@ -47,7 +47,7 @@ struct mac_cleanerApp: App {
             }
         }
 
-        MenuBarExtra("MacCleaner+", systemImage: "internaldrive") {
+        MenuBarExtra(AppLegal.shortName, systemImage: "internaldrive") {
             MenuBarMonitor()
                 .installAppStores(from: appState)
         }

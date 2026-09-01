@@ -18,10 +18,21 @@ struct AppLegalTests {
         let url = AppLegal.hostedPrivacyPolicyURL
         #expect(!url.absoluteString.contains("example.com"))
         #expect(url.scheme == "https")
+        #expect(url.absoluteString.contains("privacy-policy"))
     }
 
-    @Test func termsUseAppleStandardEULA() {
-        #expect(AppLegal.termsOfUseURL.host?.contains("apple.com") == true)
+    @Test func termsOfUseURLIsHostedHTTPS() {
+        let url = AppLegal.termsOfUseURL
+        #expect(url.scheme == "https")
+        #expect(!url.absoluteString.contains("example.com"))
+        #expect(url.absoluteString.contains("terms-of-use"))
+    }
+
+    @Test func rateUsURLUsesAppStoreID() {
+        #expect(AppLegal.appStoreID == "6805994086")
+        #expect(AppLegal.rateUsURL.absoluteString.contains("6805994086"))
+        #expect(AppLegal.rateUsURL.absoluteString.contains("write-review"))
+        #expect(AppLegal.rateUsURL.scheme == "https")
     }
 
     @Test func paywallPriceNeverUsesHardcodedFallback() {

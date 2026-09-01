@@ -340,10 +340,11 @@
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readwrite;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = "MacCleaner+";
+				INFOPLIST_KEY_CFBundleDisplayName = "Mac Cleaner";
+				INFOPLIST_KEY_CFBundleName = "Mac Cleaner";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
-				INFOPLIST_KEY_NSDownloadsFolderUsageDescription = "MacCleaner+ can clean files inside your Downloads folder when you choose to scan or trash items there.";
-				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2026 MacCleaner+. All rights reserved.";
+				INFOPLIST_KEY_NSDownloadsFolderUsageDescription = "Mac Cleaner can clean files inside your Downloads folder when you choose to scan or trash items there.";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2026 Mac Cleaner. All rights reserved.";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -379,10 +380,11 @@
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readwrite;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = "MacCleaner+";
+				INFOPLIST_KEY_CFBundleDisplayName = "Mac Cleaner";
+				INFOPLIST_KEY_CFBundleName = "Mac Cleaner";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
-				INFOPLIST_KEY_NSDownloadsFolderUsageDescription = "MacCleaner+ can clean files inside your Downloads folder when you choose to scan or trash items there.";
-				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2026 MacCleaner+. All rights reserved.";
+				INFOPLIST_KEY_NSDownloadsFolderUsageDescription = "Mac Cleaner can clean files inside your Downloads folder when you choose to scan or trash items there.";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2026 Mac Cleaner. All rights reserved.";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",

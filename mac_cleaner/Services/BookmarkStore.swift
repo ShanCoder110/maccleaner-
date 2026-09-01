@@ -162,7 +162,7 @@ final class BookmarkStore: ObservableObject {
         }
         guard let path = Self.suggestedPath(for: kind) else {
             return requestFolderAccess(
-                message: "Choose a folder MacCleaner+ may scan and clean.",
+                message: "Choose a folder \(AppLegal.displayName) may scan and clean.",
                 suggestedPath: BookmarkStore.realUserHomePath(),
                 kind: kind
             )
@@ -280,7 +280,7 @@ final class BookmarkStore: ObservableObject {
         panel.canCreateDirectories = false
         panel.prompt = "Grant Access"
         panel.title = "Allow Trash Access"
-        panel.message = "Select “\(itemName)” or its containing folder so MacCleaner+ can move it to Trash. Nothing is deleted permanently."
+        panel.message = "Select “\(itemName)” or its containing folder so \(AppLegal.displayName) can move it to Trash. Nothing is deleted permanently."
         panel.directoryURL = url.deletingLastPathComponent()
         if url.pathExtension == "app" {
             panel.allowedContentTypes = [.application, .folder]

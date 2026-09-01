@@ -11,12 +11,23 @@ import Foundation
 enum AppLegal {
     static let supportEmail = "support.devshan@gmail.com"
 
+    /// Dock, menu bar extra, and Finder icon label.
+    static let shortName = "Mac Cleaner"
+
+    /// In-app product name.
+    static let displayName = "Mac Cleaner: Clean Up Storage"
+
     static var supportMailtoURL: URL {
         URL(string: "mailto:\(supportEmail)")!
     }
 
-    /// Dummy URL — replace with your live Google Sites privacy page before App Store submit.
-    static let hostedPrivacyPolicyURL = URL(string: "https://sites.google.com/view/maccleaner-plus/privacy")!
+    /// Public https pages for App Store Connect and in-app Privacy Policy / Terms links.
+    static let hostedPrivacyPolicyURL = URL(string: "https://sites.google.com/view/mac--cleaner/privacy-policy")!
 
-    static let termsOfUseURL = URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!
+    static let termsOfUseURL = URL(string: "https://sites.google.com/view/mac--cleaner/terms-of-use")!
+
+    static let appStoreID = "6805994086"
+
+    /// Opens the Mac App Store write-review page.
+    static let rateUsURL = URL(string: "https://apps.apple.com/app/id\(appStoreID)?action=write-review")!
 }

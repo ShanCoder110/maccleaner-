@@ -96,7 +96,7 @@ struct DuplicatesView: View {
                         title: "Find identical files",
                         message: bookmarks.hasAnyAccess
                             ? "Scan authorized folders for exact duplicates. You’ll review each group before anything moves to Trash."
-                            : "Grant folder access to find duplicate files. MacCleaner+ only scans folders you authorize.",
+                            : "Grant folder access to find duplicate files. \(AppLegal.displayName) only scans folders you authorize.",
                         systemImage: "rectangle.on.rectangle",
                         primaryActionTitle: bookmarks.hasAnyAccess ? "Scan for Duplicates" : "Manage Permissions",
                         primaryAction: {

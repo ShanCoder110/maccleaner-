@@ -139,7 +139,7 @@ struct SmartScanView: View {
                     Text("Authorize folders to unlock Smart Scan")
                         .font(AppTypography.title)
                         .foregroundStyle(AppColors.textPrimary)
-                    Text("MacCleaner+ only looks inside folders you choose. Applications can still be listed from /Applications.")
+                    Text("\(AppLegal.displayName) only looks inside folders you choose. Applications can still be listed from /Applications.")
                         .font(AppTypography.callout)
                         .foregroundStyle(AppColors.textSecondary)
                         .fixedSize(horizontal: false, vertical: true)
