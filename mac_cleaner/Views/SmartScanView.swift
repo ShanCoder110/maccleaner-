@@ -90,7 +90,7 @@ struct SmartScanView: View {
         if session.hasResults, let date = summary.lastScanDate {
             return "Last scanned · \(date.formatted(date: .abbreviated, time: .shortened))"
         }
-        return "Find what you can safely recover — then review the rest"
+        return "Find what you can safely recover - then review the rest"
     }
 
     @ViewBuilder
@@ -309,7 +309,7 @@ struct SmartScanView: View {
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(AppColors.textTertiary)
                     .padding(.top, 1)
-                Text("Only scans folders you authorize. Files go to Trash — never permanently deleted from here.")
+                Text("Only scans folders you authorize. Files go to Trash and never permanently deleted from here.")
                     .font(AppTypography.caption)
                     .foregroundStyle(AppColors.textTertiary)
                     .fixedSize(horizontal: false, vertical: true)

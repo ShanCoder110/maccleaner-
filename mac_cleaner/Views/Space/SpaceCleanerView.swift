@@ -167,7 +167,7 @@ struct SpaceCleanerView: View {
                                 }
                                 Spacer()
                                 if item.isRootOwned {
-                                    StatusBadge(title: "Root-owned", style: .danger)
+                                    StatusBadge(title: FileOwnership.rootOwnedLabel, style: .danger)
                                         .help(FileOwnership.rootOwnedTooltip)
                                 } else if item.isSensitive {
                                     StatusBadge(title: "Review", style: .warning)
@@ -204,9 +204,8 @@ struct SpaceCleanerView: View {
         if !rootOwnedItems.isEmpty {
             let names = rootOwnedItems.prefix(3).map(\.name).joined(separator: ", ")
             let more = rootOwnedItems.count > 3 ? " and \(rootOwnedItems.count - 3) more" : ""
-            statusMessage = "⚠️ Cannot delete root-owned files: \(names)\(more). These require manual deletion with sudo in Terminal. See Activity log for commands."
-            
-            // Log terminal commands for each root-owned file
+            statusMessage = FileOwnership.skippedRootOwnedStatus(names: names, more: more)
+
             for item in rootOwnedItems {
                 await MainActor.run {
                     appState.activityLog.log(.error, FileOwnership.rootOwnershipExplanation(for: item.url))

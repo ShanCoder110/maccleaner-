@@ -91,7 +91,7 @@ struct SettingsView: View {
                     Spacer()
 
                     if !subscription.isPro {
-                        PrimaryButton(title: "Upgrade", icon: "sparkles", size: .compact) {
+                        PrimaryButton(title: "Upgrade", icon: "crown.fill", size: .compact) {
                             appState.presentPaywall()
                         }
                     }

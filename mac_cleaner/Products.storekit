@@ -10,7 +10,7 @@
       "internalID" : "1000000003",
       "localizations" : [
         {
-          "description" : "One-time purchase for Mac Cleaner: Clean Up Storage forever.",
+          "description" : "Pay once, keep Pro forever",
           "displayName" : "Pro Lifetime",
           "locale" : "en_US"
         }
@@ -58,7 +58,7 @@
           },
           "localizations" : [
             {
-              "description" : "Unlock Space Cleaner, Large Files, Space Lens, Orphans, and Clean Junk.",
+              "description" : "Unlock all Pro tools",
               "displayName" : "Pro Monthly",
               "locale" : "en_US"
             }
@@ -91,7 +91,7 @@
           },
           "localizations" : [
             {
-              "description" : "Best value subscription — full Pro access billed yearly.",
+              "description" : "Yearly Pro, best value",
               "displayName" : "Pro Yearly",
               "locale" : "en_US"
             }

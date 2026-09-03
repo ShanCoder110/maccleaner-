@@ -82,7 +82,7 @@ struct PaywallView: View {
                 .offset(y: appeared ? 0 : 18)
             }
         }
-        .frame(minWidth: 880, idealWidth: 960, minHeight: 560, idealHeight: 620)
+        .frame(minWidth: 880, idealWidth: 960, minHeight: 700, idealHeight: 700)
         .onAppear {
             withAnimation(.spring(response: 0.55, dampingFraction: 0.82)) {
                 appeared = true
@@ -208,11 +208,14 @@ struct PaywallView: View {
     private var rightColumn: some View {
         VStack(alignment: .leading, spacing: AppSpacing.lg) {
             planSwitch
+                .fixedSize(horizontal: false, vertical: true)
 
             planSummaryCard
+                .fixedSize(horizontal: false, vertical: true)
                 .animation(.spring(response: 0.4, dampingFraction: 0.78), value: planKind)
 
             ctaBlock
+                .fixedSize(horizontal: false, vertical: true)
 
             legalFooter
         }
@@ -259,15 +262,11 @@ struct PaywallView: View {
                 RoundedRectangle(cornerRadius: AppRadius.lg, style: .continuous)
                     .fill(AppColors.controlFillSecondary)
             )
-
-            if showsTrialBadge {
-                StatusBadge(title: "3-day free trial included", style: .info, icon: "gift.fill")
-            }
         }
     }
 
     private var showsTrialBadge: Bool {
-        (planKind == .monthly || planKind == .annual) && subscription.isEligibleForIntroOffer
+        planKind == .monthly || planKind == .annual
     }
 
     private var planSummaryCard: some View {
@@ -297,6 +296,32 @@ struct PaywallView: View {
                 .foregroundStyle(AppColors.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
 
+            if showsTrialBadge {
+                HStack(spacing: AppSpacing.sm) {
+                    Image(systemName: "gift.fill")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(AppColors.accent)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(subscription.isEligibleForIntroOffer
+                             ? "Start with 3 days free"
+                             : "3-day free trial for new subscribers")
+                            .font(AppTypography.bodyMedium)
+                            .foregroundStyle(AppColors.textPrimary)
+                        Text(planKind == .monthly
+                             ? "Then \(priceLabel) per month unless you cancel at least 24 hours before the trial ends."
+                             : "Then \(priceLabel) per year unless you cancel at least 24 hours before the trial ends.")
+                            .font(AppTypography.caption)
+                            .foregroundStyle(AppColors.textSecondary)
+                    }
+                }
+                .padding(AppSpacing.md)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(
+                    RoundedRectangle(cornerRadius: AppRadius.lg, style: .continuous)
+                        .fill(AppColors.surface)
+                )
+            }
+
             if subscription.products.isEmpty {
                 Text(subscription.isLoading ? "Loading plans…" : "Plans are temporarily unavailable. Try Restore Purchases or check back shortly.")
                     .font(AppTypography.caption)
@@ -318,17 +343,11 @@ struct PaywallView: View {
     private var planSubtitle: String {
         switch planKind {
         case .monthly:
-            if subscription.isEligibleForIntroOffer {
-                return "Billed monthly after a 3-day free trial. Cancel anytime in Apple Subscriptions."
-            }
-            return "Full Pro access, billed every month. Cancel anytime."
+            return "Pro Monthly. 3-day free trial for eligible new subscribers, then \(priceLabel) per month."
         case .annual:
-            if subscription.isEligibleForIntroOffer {
-                return "Billed yearly after a 3-day free trial. Cancel anytime in Apple Subscriptions."
-            }
-            return "Full Pro access, billed once a year. Cancel anytime."
+            return "Pro Yearly. 3-day free trial for eligible new subscribers, then \(priceLabel) per year."
         case .lifetime:
-            return "One-time purchase. Keep Pro forever — no renewals."
+            return "Pro Lifetime. One-time purchase of \(priceLabel). Keep Pro forever — no renewals."
         }
     }
 
@@ -441,12 +460,24 @@ struct PaywallView: View {
             .font(AppTypography.captionMedium)
             .foregroundStyle(AppColors.accent)
 
-            Text(planKind == .lifetime
-                 ? "Lifetime is a one-time charge to your Apple ID. Restore purchases on any Mac signed into the same Apple ID."
-                 : "Payment is charged to your Apple ID. Subscriptions renew automatically unless canceled at least 24 hours before the period ends.")
+            Text(legalDisclosure)
                 .font(AppTypography.micro)
                 .foregroundStyle(AppColors.textTertiary)
+                .multilineTextAlignment(.leading)
+                .lineLimit(nil)
                 .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+
+    private var legalDisclosure: String {
+        switch planKind {
+        case .monthly:
+            return PaywallPricing.autoRenewLegalText(displayPrice: priceLabel, period: .month)
+        case .annual:
+            return PaywallPricing.autoRenewLegalText(displayPrice: priceLabel, period: .year)
+        case .lifetime:
+            return PaywallPricing.lifetimeLegalText(displayPrice: priceLabel)
         }
     }
 }

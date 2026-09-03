@@ -115,7 +115,7 @@ struct AppSidebar: View {
             VStack(alignment: .leading, spacing: AppSpacing.sm) {
                 HStack(spacing: AppSpacing.xs) {
                     AppIconTile(
-                        systemName: subscription.isPro ? "crown.fill" : "sparkles",
+                        systemName: "crown.fill",
                         size: 22,
                         iconSize: 10,
                         cornerRadius: 7,
@@ -143,10 +143,12 @@ struct AppSidebar: View {
                     SecondaryButton(title: "Manage", size: .compact) {
                         appState.presentPaywall()
                     }
+                    .frame(maxWidth: .infinity)
                 } else {
-                    PrimaryButton(title: "Upgrade to Pro", icon: "sparkles", size: .compact) {
+                    PrimaryButton(title: "Upgrade to Pro", icon: "crown.fill", size: .compact) {
                         appState.presentPaywall()
                     }
+                    .frame(maxWidth: .infinity)
                 }
             }
         }

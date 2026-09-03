@@ -335,16 +335,19 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEAD_CODE_STRIPPING = YES;
 				ENABLE_APP_SANDBOX = YES;
-				ENABLE_DOWNLOADS_FOLDER = readwrite;
-				ENABLE_FILE_ACCESS_DOWNLOADS_FOLDER = readwrite;
+				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readwrite;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "Mac Cleaner";
 				INFOPLIST_KEY_CFBundleName = "Mac Cleaner";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
-				INFOPLIST_KEY_NSDownloadsFolderUsageDescription = "Mac Cleaner can clean files inside your Downloads folder when you choose to scan or trash items there.";
+				INFOPLIST_KEY_NSDesktopFolderUsageDescription = "Mac Cleaner can scan and move files to Trash inside your Desktop folder only after you grant access.";
+				INFOPLIST_KEY_NSDocumentsFolderUsageDescription = "Mac Cleaner can scan and move files to Trash inside your Documents folder only after you grant access.";
+				INFOPLIST_KEY_NSDownloadsFolderUsageDescription = "Mac Cleaner can scan and move files to Trash inside your Downloads folder only after you grant access.";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2026 Mac Cleaner. All rights reserved.";
+				INFOPLIST_KEY_NSNetworkVolumesUsageDescription = "Mac Cleaner can scan and move files to Trash on a network volume only after you grant access to a folder on that volume.";
+				INFOPLIST_KEY_NSRemovableVolumesUsageDescription = "Mac Cleaner can scan and move files to Trash on a removable volume only after you grant access to a folder on that volume.";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -375,16 +378,19 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEAD_CODE_STRIPPING = YES;
 				ENABLE_APP_SANDBOX = YES;
-				ENABLE_DOWNLOADS_FOLDER = readwrite;
-				ENABLE_FILE_ACCESS_DOWNLOADS_FOLDER = readwrite;
+				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readwrite;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "Mac Cleaner";
 				INFOPLIST_KEY_CFBundleName = "Mac Cleaner";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
-				INFOPLIST_KEY_NSDownloadsFolderUsageDescription = "Mac Cleaner can clean files inside your Downloads folder when you choose to scan or trash items there.";
+				INFOPLIST_KEY_NSDesktopFolderUsageDescription = "Mac Cleaner can scan and move files to Trash inside your Desktop folder only after you grant access.";
+				INFOPLIST_KEY_NSDocumentsFolderUsageDescription = "Mac Cleaner can scan and move files to Trash inside your Documents folder only after you grant access.";
+				INFOPLIST_KEY_NSDownloadsFolderUsageDescription = "Mac Cleaner can scan and move files to Trash inside your Downloads folder only after you grant access.";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2026 Mac Cleaner. All rights reserved.";
+				INFOPLIST_KEY_NSNetworkVolumesUsageDescription = "Mac Cleaner can scan and move files to Trash on a network volume only after you grant access to a folder on that volume.";
+				INFOPLIST_KEY_NSRemovableVolumesUsageDescription = "Mac Cleaner can scan and move files to Trash on a removable volume only after you grant access to a folder on that volume.";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",

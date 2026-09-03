@@ -18,14 +18,18 @@ nonisolated enum FileOwnership {
         return ownerName == "root" || ownerName == "system"
     }
     
-    /// Returns a user-friendly explanation for why a root-owned file cannot be deleted.
+    /// Why this app cannot move a system-owned item to Trash. No Terminal/sudo instructions.
     static func rootOwnershipExplanation(for url: URL) -> String {
-        "This file is owned by root/system and requires admin privileges to delete. Run in Terminal: sudo rm -rf \"\(url.path)\""
+        "\(url.lastPathComponent) is owned by the system and can’t be moved to Trash from this app."
     }
-    
+
+    static func skippedRootOwnedStatus(names: String, more: String) -> String {
+        "Skipped system-owned items: \(names)\(more). They can’t be moved to Trash from this app."
+    }
+
     /// Short label for UI badges
-    static let rootOwnedLabel = "Root-owned"
-    
+    static let rootOwnedLabel = "System-owned"
+
     /// Short explanation for tooltips
-    static let rootOwnedTooltip = "Owned by system. Requires sudo to delete manually."
+    static let rootOwnedTooltip = "Owned by the system. This app can’t move it to Trash."
 }

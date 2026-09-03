@@ -203,7 +203,7 @@ struct CleaningService {
         if let attrs = try? FileManager.default.attributesOfItem(atPath: url.path),
            let ownerName = attrs[.ownerAccountName] as? String,
            ownerName == "root" {
-            return "\(url.lastPathComponent) is owned by root/system. Run in Terminal: sudo rm -rf \"\(url.path)\""
+            return FileOwnership.rootOwnershipExplanation(for: url)
         }
         
         if nsError.domain == NSCocoaErrorDomain,
