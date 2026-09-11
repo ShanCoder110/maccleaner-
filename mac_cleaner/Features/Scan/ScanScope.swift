@@ -47,7 +47,7 @@ struct ScanScope: Sendable {
         return ScanScope(
             home: BookmarkStore.realUserHomePath(),
             roots: bookmarks.accessibleRootURLs,
-            coverageTitles: bookmarks.folders.map(\.kind.title).sorted(),
+            coverageTitles: bookmarks.folders.map(\.coverageTitle).sorted(),
             folders: folders
         )
     }

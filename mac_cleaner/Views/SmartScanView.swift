@@ -50,9 +50,25 @@ struct SmartScanView: View {
                     }
 
                     if !statusMessage.isEmpty {
-                        Text(statusMessage)
-                            .font(AppTypography.caption)
-                            .foregroundStyle(AppColors.textSecondary)
+                        HStack(spacing: AppSpacing.sm) {
+                            Image(systemName: "checkmark.circle.fill")
+                                .font(.system(size: 13, weight: .semibold))
+                                .foregroundStyle(AppColors.success)
+                            Text(statusMessage)
+                                .font(AppTypography.callout)
+                                .foregroundStyle(AppColors.textSecondary)
+                                .fixedSize(horizontal: false, vertical: true)
+                            Spacer(minLength: 0)
+                        }
+                        .padding(AppSpacing.md)
+                        .background(
+                            RoundedRectangle(cornerRadius: AppRadius.lg, style: .continuous)
+                                .fill(AppColors.successMuted)
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: AppRadius.lg, style: .continuous)
+                                .strokeBorder(AppColors.success.opacity(0.22), lineWidth: 1)
+                        )
                     }
                 }
                 .padding(AppSpacing.contentInset)
@@ -99,10 +115,12 @@ struct SmartScanView: View {
 
         if summary.resultsMayBeStale {
             staleBanner
+                .smartScanAppear(delay: 0.04)
         }
 
         if !summary.scannerWarnings.isEmpty {
             warningsBanner
+                .smartScanAppear(delay: 0.06)
         }
 
         if scanResults.space.junkItemCount > 0 {
@@ -111,28 +129,41 @@ struct SmartScanView: View {
                     confirmCleanJunk = true
                 }
             }
+            .smartScanAppear(delay: 0.08)
         }
 
         if !summary.topOpportunities.isEmpty {
             SmartScanOpportunitiesSection(searchText: searchText)
+                .smartScanAppear(delay: 0.12)
         }
 
         SmartScanCategoriesGrid(searchText: searchText)
+            .smartScanAppear(delay: 0.16)
         SmartScanCoverageCard()
+            .smartScanAppear(delay: 0.2)
     }
 
     // MARK: - Ready / permission
 
     private var permissionNeededCard: some View {
-        AppCard(padding: AppSpacing.xxl, radius: AppRadius.xxxl) {
+        AppCard(padding: AppSpacing.xxl, radius: AppRadius.xxxl, wash: {
+            SmartScanHeroBackdrop(tint: AppColors.warning)
+        }) {
             HStack(alignment: .center, spacing: AppSpacing.xxl) {
-                AppIconTile(
-                    systemName: "folder.badge.questionmark",
-                    size: 88,
-                    iconSize: 32,
-                    cornerRadius: AppRadius.xxl,
-                    style: .warning
-                )
+                ZStack {
+                    Circle()
+                        .fill(AppColors.warning.opacity(0.16))
+                        .frame(width: 148, height: 148)
+                        .blur(radius: 18)
+                    AppIconTile(
+                        systemName: "folder.badge.questionmark",
+                        size: 88,
+                        iconSize: 32,
+                        cornerRadius: AppRadius.xxl,
+                        style: .warning
+                    )
+                }
+                .frame(width: 148, height: 148)
 
                 VStack(alignment: .leading, spacing: AppSpacing.sm) {
                     StatusBadge(title: "Access needed", style: .warning, icon: "lock.fill")
@@ -158,89 +189,107 @@ struct SmartScanView: View {
                 Spacer(minLength: 0)
             }
         }
+        .smartScanAppear()
     }
 
     private var readyHero: some View {
-        AppCard(padding: AppSpacing.xxl, radius: AppRadius.xxxl) {
-            HStack(alignment: .center, spacing: AppSpacing.xxl) {
-                ZStack {
-                    Circle()
-                        .fill(AppColors.accent.opacity(0.12))
-                        .frame(width: 148, height: 148)
-                        .blur(radius: 14)
+        AppCard(padding: AppSpacing.xxl, radius: AppRadius.xxxl, wash: {
+            SmartScanHeroBackdrop()
+        }) {
+            VStack(alignment: .leading, spacing: AppSpacing.xl) {
+                HStack(alignment: .center, spacing: AppSpacing.xxl) {
+                    SmartScanOrb(mode: .idle, size: 148)
 
-                    Circle()
-                        .strokeBorder(AppColors.accent.opacity(0.18), lineWidth: 1.5)
-                        .frame(width: 132, height: 132)
+                    VStack(alignment: .leading, spacing: AppSpacing.sm) {
+                        StatusBadge(title: "Ready to scan", style: .info, icon: "sparkles")
 
-                    AppIconTile(
-                        systemName: "sparkles",
-                        size: 88,
-                        iconSize: 34,
-                        cornerRadius: 44,
-                        style: .accent
-                    )
-                }
-                .frame(width: 148, height: 148)
+                        Text("See what’s using space in your folders")
+                            .font(AppTypography.title)
+                            .foregroundStyle(AppColors.textPrimary)
 
-                VStack(alignment: .leading, spacing: AppSpacing.sm) {
-                    StatusBadge(title: "Ready to scan", style: .info, icon: "sparkles")
+                        Text("Smart Scan checks caches, large files, duplicates, leftovers, and more — only where you’ve granted access.")
+                            .font(AppTypography.callout)
+                            .foregroundStyle(AppColors.textSecondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .frame(maxWidth: 460, alignment: .leading)
 
-                    Text("See what’s using space in your folders")
-                        .font(AppTypography.title)
-                        .foregroundStyle(AppColors.textPrimary)
-
-                    Text("Smart Scan checks caches, large files, duplicates, leftovers, and more — only where you’ve granted access.")
-                        .font(AppTypography.callout)
-                        .foregroundStyle(AppColors.textSecondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .frame(maxWidth: 460, alignment: .leading)
-
-                    HStack(spacing: AppSpacing.sm) {
-                        metricChip(icon: "internaldrive", label: "\(appState.diskFreeLabel) free")
-                        if !bookmarks.folders.isEmpty {
-                            metricChip(
-                                icon: "folder",
-                                label: "\(bookmarks.folders.count) folder\(bookmarks.folders.count == 1 ? "" : "s")"
+                        HStack(spacing: AppSpacing.sm) {
+                            SmartScanMetricChip(
+                                icon: "internaldrive",
+                                label: "\(appState.diskFreeLabel) free",
+                                tint: AppColors.accent
                             )
+                            if !bookmarks.folders.isEmpty {
+                                SmartScanMetricChip(
+                                    icon: "folder.fill",
+                                    label: "\(bookmarks.folders.count) folder\(bookmarks.folders.count == 1 ? "" : "s")",
+                                    tint: AppColors.toolTeal
+                                )
+                            }
                         }
-                    }
-                    .padding(.top, AppSpacing.xxs)
+                        .padding(.top, AppSpacing.xxs)
 
-                    HStack(spacing: AppSpacing.sm) {
-                        PrimaryButton(title: "Scan Now", icon: "magnifyingglass", size: .large) {
-                            Task { await appState.runSmartScan() }
+                        HStack(spacing: AppSpacing.sm) {
+                            PrimaryButton(title: "Scan Now", icon: "magnifyingglass", size: .large) {
+                                Task { await appState.runSmartScan() }
+                            }
+                            SecondaryButton(title: "Manage Permissions", icon: "folder.badge.plus") {
+                                appState.openManagePermissions()
+                            }
                         }
-                        SecondaryButton(title: "Manage Permissions", icon: "folder.badge.plus") {
-                            appState.openManagePermissions()
-                        }
+                        .padding(.top, AppSpacing.sm)
                     }
-                    .padding(.top, AppSpacing.sm)
+
+                    Spacer(minLength: 0)
                 }
 
-                Spacer(minLength: 0)
+                HStack(spacing: AppSpacing.sm) {
+                    ForEach(scanHighlights, id: \.title) { item in
+                        highlightTile(item)
+                    }
+                }
             }
         }
+        .smartScanAppear()
     }
 
-    private func metricChip(icon: String, label: String) -> some View {
-        HStack(spacing: AppSpacing.xs) {
-            Image(systemName: icon)
-                .font(.system(size: 10, weight: .semibold))
-                .foregroundStyle(AppColors.accent)
-            Text(label)
-                .font(AppTypography.captionMedium)
-                .foregroundStyle(AppColors.textSecondary)
+    private var scanHighlights: [(icon: String, title: String, detail: String, tint: Color)] {
+        [
+            ("internaldrive", "Caches & logs", "Safe junk first", AppColors.success),
+            ("doc.on.doc", "Large files", "50 MB and up", AppColors.warning),
+            ("rectangle.on.rectangle", "Duplicates", "Identical copies", AppColors.toolTeal),
+            ("tray", "Leftovers", "Orphaned app files", AppColors.toolRose),
+        ]
+    }
+
+    private func highlightTile(_ item: (icon: String, title: String, detail: String, tint: Color)) -> some View {
+        HStack(spacing: AppSpacing.sm) {
+            AppIconTile(
+                systemName: item.icon,
+                size: 32,
+                iconSize: 13,
+                cornerRadius: AppRadius.sm,
+                style: .tint(item.tint)
+            )
+            VStack(alignment: .leading, spacing: 1) {
+                Text(item.title)
+                    .font(AppTypography.calloutMedium)
+                    .foregroundStyle(AppColors.textPrimary)
+                Text(item.detail)
+                    .font(AppTypography.micro)
+                    .foregroundStyle(AppColors.textTertiary)
+            }
+            Spacer(minLength: 0)
         }
-        .padding(.horizontal, AppSpacing.sm)
-        .padding(.vertical, AppSpacing.xs)
+        .padding(AppSpacing.sm)
+        .frame(maxWidth: .infinity, alignment: .leading)
         .background(
-            Capsule(style: .continuous)
-                .fill(AppColors.surfaceSecondary)
+            RoundedRectangle(cornerRadius: AppRadius.lg, style: .continuous)
+                .fill(item.tint.opacity(0.08))
         )
         .overlay(
-            Capsule(style: .continuous)
-                .strokeBorder(AppColors.border, lineWidth: 1)
+            RoundedRectangle(cornerRadius: AppRadius.lg, style: .continuous)
+                .strokeBorder(item.tint.opacity(0.16), lineWidth: 1)
         )
     }
 
@@ -248,12 +297,21 @@ struct SmartScanView: View {
 
     private var staleBanner: some View {
         HStack(spacing: AppSpacing.md) {
-            Image(systemName: "clock.arrow.circlepath")
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundStyle(AppColors.warning)
-            Text("Results may have changed since the last scan.")
-                .font(AppTypography.callout)
-                .foregroundStyle(AppColors.textSecondary)
+            AppIconTile(
+                systemName: "clock.arrow.circlepath",
+                size: 32,
+                iconSize: 13,
+                cornerRadius: AppRadius.sm,
+                style: .warning
+            )
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Results may be out of date")
+                    .font(AppTypography.bodyMedium)
+                    .foregroundStyle(AppColors.textPrimary)
+                Text("Files may have changed since the last scan.")
+                    .font(AppTypography.caption)
+                    .foregroundStyle(AppColors.textSecondary)
+            }
             Spacer(minLength: 0)
             SecondaryButton(title: "Scan Again", size: .compact) {
                 Task { await appState.runSmartScan() }
@@ -261,11 +319,11 @@ struct SmartScanView: View {
         }
         .padding(AppSpacing.md)
         .background(
-            RoundedRectangle(cornerRadius: AppRadius.lg, style: .continuous)
+            RoundedRectangle(cornerRadius: AppRadius.xl, style: .continuous)
                 .fill(AppColors.warningMuted)
         )
         .overlay(
-            RoundedRectangle(cornerRadius: AppRadius.lg, style: .continuous)
+            RoundedRectangle(cornerRadius: AppRadius.xl, style: .continuous)
                 .strokeBorder(AppColors.warning.opacity(0.22), lineWidth: 1)
         )
     }
@@ -330,21 +388,29 @@ struct SmartScanView: View {
     }
 
     private var tipRow: some View {
-        HStack(alignment: .top, spacing: AppSpacing.sm) {
-            Image(systemName: "lightbulb")
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(AppColors.accent)
-                .padding(.top, 1)
+        HStack(alignment: .center, spacing: AppSpacing.md) {
+            AppIconTile(
+                systemName: "lightbulb.fill",
+                size: 32,
+                iconSize: 13,
+                cornerRadius: AppRadius.sm,
+                style: .muted
+            )
             Text(contextualTip)
                 .font(AppTypography.callout)
                 .foregroundStyle(AppColors.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
+            Spacer(minLength: 0)
         }
         .padding(AppSpacing.md)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
-            RoundedRectangle(cornerRadius: AppRadius.lg, style: .continuous)
+            RoundedRectangle(cornerRadius: AppRadius.xl, style: .continuous)
                 .fill(AppColors.accentSubtle)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: AppRadius.xl, style: .continuous)
+                .strokeBorder(AppColors.accent.opacity(0.12), lineWidth: 1)
         )
     }
 

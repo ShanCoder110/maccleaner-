@@ -5,29 +5,68 @@
 
 import SwiftUI
 
-struct AppCard<Content: View>: View {
+struct AppCard<Content: View, Wash: View>: View {
     var padding: CGFloat = AppSpacing.cardPadding
     var radius: CGFloat = AppRadius.card
     var showShadow: Bool = true
     var showBorder: Bool = true
-    @ViewBuilder var content: () -> Content
+    var wash: Wash
+    var content: Content
+
+    init(
+        padding: CGFloat = AppSpacing.cardPadding,
+        radius: CGFloat = AppRadius.card,
+        showShadow: Bool = true,
+        showBorder: Bool = true,
+        @ViewBuilder wash: () -> Wash,
+        @ViewBuilder content: () -> Content
+    ) {
+        self.padding = padding
+        self.radius = radius
+        self.showShadow = showShadow
+        self.showBorder = showBorder
+        self.wash = wash()
+        self.content = content()
+    }
 
     var body: some View {
-        content()
+        content
             .padding(padding)
-            .background(
+            .background {
                 RoundedRectangle(cornerRadius: radius, style: .continuous)
                     .fill(AppColors.surface)
-            )
-            .overlay(
-                Group {
-                    if showBorder {
-                        RoundedRectangle(cornerRadius: radius, style: .continuous)
-                            .strokeBorder(AppGradients.cardEdge, lineWidth: 1)
+                    .overlay {
+                        wash
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            .clipShape(RoundedRectangle(cornerRadius: radius, style: .continuous))
                     }
-                }
-            )
-            .appShadow(showShadow ? AppShadow.card : AppShadow.soft)
+                    .overlay {
+                        if showBorder {
+                            RoundedRectangle(cornerRadius: radius, style: .continuous)
+                                .strokeBorder(AppGradients.cardEdge, lineWidth: 1)
+                        }
+                    }
+                    .appShadow(showShadow ? AppShadow.card : AppShadow.soft)
+            }
+    }
+}
+
+extension AppCard where Wash == EmptyView {
+    init(
+        padding: CGFloat = AppSpacing.cardPadding,
+        radius: CGFloat = AppRadius.card,
+        showShadow: Bool = true,
+        showBorder: Bool = true,
+        @ViewBuilder content: () -> Content
+    ) {
+        self.init(
+            padding: padding,
+            radius: radius,
+            showShadow: showShadow,
+            showBorder: showBorder,
+            wash: { EmptyView() },
+            content: content
+        )
     }
 }
 

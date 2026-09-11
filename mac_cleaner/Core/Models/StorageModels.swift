@@ -12,6 +12,16 @@ struct GrantedFolder: Identifiable, Hashable, Codable {
     var path: String
     var kind: Kind
 
+    var coverageTitle: String {
+        switch kind {
+        case .custom:
+            let name = displayName.trimmingCharacters(in: .whitespacesAndNewlines)
+            return name.isEmpty ? kind.title : name
+        default:
+            return kind.title
+        }
+    }
+
     enum Kind: String, Codable, CaseIterable, Sendable {
         case applicationSupport
         case caches
