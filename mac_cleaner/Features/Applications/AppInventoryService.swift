@@ -14,6 +14,9 @@ struct AppInventoryService: Sendable {
             URL(fileURLWithPath: BookmarkStore.realUserHomePath()).appendingPathComponent("Applications")
         ]
 
+        let selfBundleID = Bundle.main.bundleIdentifier
+        let selfAppURL = Bundle.main.bundleURL.resolvingSymlinksInPath().standardizedFileURL
+
         var apps: [InstalledApp] = []
         let fm = FileManager.default
 
@@ -27,11 +30,36 @@ struct AppInventoryService: Sendable {
 
             for url in contents where url.pathExtension == "app" {
                 guard let app = makeApp(from: url) else { continue }
+                if Self.isCurrentApp(app, selfBundleID: selfBundleID, selfAppURL: selfAppURL) {
+                    continue
+                }
                 apps.append(app)
             }
         }
 
         return apps.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+    }
+
+    /// Never list MacCleaner+ in Applications — users shouldn't uninstall the running app from here.
+    private static func isCurrentApp(
+        _ app: InstalledApp,
+        selfBundleID: String?,
+        selfAppURL: URL
+    ) -> Bool {
+        if let selfBundleID, !selfBundleID.isEmpty,
+           app.bundleIdentifier.caseInsensitiveCompare(selfBundleID) == .orderedSame {
+            return true
+        }
+        let appURL = app.path.resolvingSymlinksInPath().standardizedFileURL
+        if appURL == selfAppURL {
+            return true
+        }
+        // Dev builds / renamed products still share our identity.
+        let id = app.bundleIdentifier.lowercased()
+        if id == "shan.maccleaner.plus" || id.hasPrefix("shan.maccleaner.plus.") {
+            return true
+        }
+        return false
     }
 
     func makeApp(from url: URL) -> InstalledApp? {

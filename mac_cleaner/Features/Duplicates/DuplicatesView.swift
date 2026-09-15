@@ -78,10 +78,8 @@ struct DuplicatesView: View {
                 coverageCard
                 controlsRow
 
-                if !duplicates.limitMessages.isEmpty, session.hasResults {
-                    limitBanner
-                } else if !session.scannerWarnings.isEmpty, session.hasResults {
-                    warningsBanner
+                if !coverageNotes.isEmpty, session.hasResults {
+                    coverageNotesBanner
                 }
 
                 if isRescanning || session.isScanning {
@@ -208,44 +206,26 @@ struct DuplicatesView: View {
         }
     }
 
-    private var limitBanner: some View {
-        HStack(alignment: .top, spacing: AppSpacing.sm) {
-            Image(systemName: "info.circle")
-                .foregroundStyle(AppColors.accent)
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Scan limit reached")
-                    .font(AppTypography.captionMedium)
-                    .foregroundStyle(AppColors.textPrimary)
-                ForEach(duplicates.limitMessages, id: \.self) { message in
-                    Text(message)
-                        .font(AppTypography.caption)
-                        .foregroundStyle(AppColors.textSecondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
+    private var coverageNotes: [String] {
+        let raw = duplicates.limitMessages.isEmpty ? session.scannerWarnings : duplicates.limitMessages
+        // Prefer duplicate-specific notes; drop generic large-file notes on this screen.
+        return raw
+            .map(ScanCoverageCopy.friendly)
+            .filter { note in
+                let lower = note.lowercased()
+                return !lower.contains("largest files") && !lower.contains("large files")
             }
-            Spacer(minLength: 0)
-        }
-        .padding(AppSpacing.md)
-        .background(
-            RoundedRectangle(cornerRadius: AppRadius.lg, style: .continuous)
-                .fill(AppColors.accentMuted)
-        )
     }
 
-    private var warningsBanner: some View {
-        HStack(alignment: .top, spacing: AppSpacing.sm) {
-            Image(systemName: "info.circle")
-                .foregroundStyle(AppColors.accent)
-            Text(session.scannerWarnings.joined(separator: " "))
-                .font(AppTypography.caption)
-                .foregroundStyle(AppColors.textSecondary)
-                .fixedSize(horizontal: false, vertical: true)
-            Spacer(minLength: 0)
-        }
-        .padding(AppSpacing.md)
-        .background(
-            RoundedRectangle(cornerRadius: AppRadius.lg, style: .continuous)
-                .fill(AppColors.accentMuted)
+    private var coverageNotesBanner: some View {
+        ScanCoverageBanner(
+            title: "Focused on the biggest duplicate groups",
+            summary: "Smart limits keep large-folder scans useful and responsive.",
+            notes: coverageNotes,
+            permissionsTitle: "Permissions",
+            rescanTitle: "Rescan",
+            onPermissions: { appState.openManagePermissions() },
+            onRescan: rescan
         )
     }
 

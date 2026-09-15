@@ -87,43 +87,62 @@ struct DiskTreemapView: View {
 
     @ViewBuilder
     private func usageContent(for current: TreemapNode) -> some View {
+        let children = rankedChildren
+        let totalBytes = max(current.byteSize, children.reduce(Int64(0)) { $0 + $1.byteSize }, 1)
         let slices = SpaceLensSlices.make(
-            children: rankedChildren,
-            parentBytes: current.byteSize,
-            collapseRemainder: rankedChildren.count > SpaceLensSlices.maxNamed + 1,
+            children: children,
+            parentBytes: totalBytes,
             isDirectory: { isDirectory($0) }
         )
+        let layoutMode = SpaceLensLayout.mode(for: children, totalBytes: totalBytes)
 
         VStack(alignment: .leading, spacing: AppSpacing.lg) {
-            VStack(alignment: .leading, spacing: AppSpacing.xs) {
+            VStack(alignment: .leading, spacing: AppSpacing.sm) {
                 Text(current.name)
                     .font(AppTypography.title)
                     .foregroundStyle(AppColors.textPrimary)
                     .lineLimit(1)
-                Text(breadcrumb(for: current))
-                    .font(AppTypography.caption)
-                    .foregroundStyle(AppColors.textTertiary)
-                    .lineLimit(2)
+
+                breadcrumbTrail
             }
 
             if searchText.isEmpty, !slices.isEmpty {
-                SpaceLensCompositionBar(slices: slices, totalBytes: current.byteSize)
+                SpaceLensCompositionBar(slices: slices, totalBytes: totalBytes)
             }
 
             SectionHeader(
                 title: "Largest items",
-                subtitle: rankedChildren.isEmpty
+                subtitle: children.isEmpty
                     ? "No items to show"
-                    : "\(rankedChildren.count) item\(rankedChildren.count == 1 ? "" : "s") · sorted by size"
+                    : layoutMode == .rankedList
+                        ? "\(children.count) items · ranked list (one folder dominates)"
+                        : "\(children.count) items · sorted by size"
             )
 
-            if slices.isEmpty {
+            if children.isEmpty {
                 Text(searchText.isEmpty ? "This folder has no measurable children." : "No items match your search.")
                     .font(AppTypography.callout)
                     .foregroundStyle(AppColors.textSecondary)
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            } else if layoutMode == .rankedList {
+                SpaceLensRankedBrowser(
+                    children: children,
+                    totalBytes: totalBytes,
+                    isDirectory: isDirectory,
+                    onOpen: activate,
+                    onReveal: { appState.cleaning.reveal($0.url) }
+                )
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
-                SpaceLensBentoGrid(slices: slices, totalBytes: max(current.byteSize, 1)) { slice in
+                SpaceLensBentoGrid(
+                    slices: SpaceLensSlices.make(
+                        children: children,
+                        parentBytes: totalBytes,
+                        softenDominance: true,
+                        isDirectory: { isDirectory($0) }
+                    ),
+                    totalBytes: totalBytes
+                ) { slice in
                     guard let node = slice.node else { return }
                     activate(node)
                 }
@@ -131,6 +150,43 @@ struct DiskTreemapView: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+    }
+
+    private var breadcrumbTrail: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: AppSpacing.xs) {
+                if let root = rootNode {
+                    breadcrumbChip(title: root.name, isCurrent: pathStack.isEmpty) {
+                        pathStack.removeAll()
+                    }
+                }
+                ForEach(Array(pathStack.enumerated()), id: \.element.id) { index, node in
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 9, weight: .semibold))
+                        .foregroundStyle(AppColors.textTertiary)
+                    breadcrumbChip(title: node.name, isCurrent: index == pathStack.count - 1) {
+                        pathStack = Array(pathStack.prefix(index + 1))
+                    }
+                }
+            }
+        }
+    }
+
+    private func breadcrumbChip(title: String, isCurrent: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(title)
+                .font(AppTypography.captionMedium)
+                .foregroundStyle(isCurrent ? AppColors.textPrimary : AppColors.accent)
+                .lineLimit(1)
+                .padding(.horizontal, AppSpacing.sm)
+                .padding(.vertical, 5)
+                .background(
+                    Capsule(style: .continuous)
+                        .fill(isCurrent ? AppColors.controlFillSecondary : AppColors.accentMuted)
+                )
+        }
+        .buttonStyle(.plain)
+        .disabled(isCurrent)
     }
 
     private func chooseFolder() {
@@ -181,16 +237,30 @@ struct DiskTreemapView: View {
         }
     }
 
-    private func breadcrumb(for node: TreemapNode) -> String {
-        ([rootNode?.name].compactMap { $0 } + pathStack.map(\.name)).joined(separator: " / ")
-    }
-
     private func isDirectory(_ url: URL) -> Bool {
         var isDir: ObjCBool = false
         guard FileManager.default.fileExists(atPath: url.path, isDirectory: &isDir) else {
             return false
         }
         return isDir.boolValue
+    }
+}
+
+// MARK: - Layout mode
+
+private enum SpaceLensLayout {
+    case bento
+    case rankedList
+
+    /// When one child owns most of the space, a proportional treemap collapses
+    /// everything else into unusable slivers — switch to a ranked browser.
+    static func mode(for children: [TreemapNode], totalBytes: Int64) -> SpaceLensLayout {
+        guard let top = children.first, totalBytes > 0 else { return .rankedList }
+        let share = Double(top.byteSize) / Double(totalBytes)
+        if share >= 0.55 || children.count > 14 {
+            return .rankedList
+        }
+        return .bento
     }
 }
 
@@ -203,20 +273,22 @@ private struct SpaceLensSlice: Identifiable {
     let color: Color
     let node: TreemapNode?
     let isDirectory: Bool
+    /// Visual weight used by the bento (may be softened vs true size).
+    var visualBytes: Int64
 }
 
 private enum SpaceLensSlices {
-    static let maxNamed = 7
+    static let maxNamed = 8
 
     static func make(
         children: [TreemapNode],
         parentBytes: Int64,
-        collapseRemainder: Bool,
+        softenDominance: Bool = false,
         isDirectory: (URL) -> Bool
     ) -> [SpaceLensSlice] {
         let sorted = children.sorted { $0.byteSize > $1.byteSize }
         let palette = SpaceLensPalette.colors
-        let shouldCollapse = collapseRemainder && sorted.count > maxNamed + 1
+        let shouldCollapse = sorted.count > maxNamed + 1
         let named = shouldCollapse ? Array(sorted.prefix(maxNamed)) : sorted
 
         var slices: [SpaceLensSlice] = named.enumerated().map { index, node in
@@ -226,7 +298,8 @@ private enum SpaceLensSlices {
                 byteSize: node.byteSize,
                 color: palette[index % palette.count],
                 node: node,
-                isDirectory: isDirectory(node.url) || !node.children.isEmpty
+                isDirectory: isDirectory(node.url) || !node.children.isEmpty,
+                visualBytes: node.byteSize
             )
         }
 
@@ -241,13 +314,209 @@ private enum SpaceLensSlices {
                         byteSize: other,
                         color: SpaceLensPalette.other,
                         node: nil,
-                        isDirectory: false
+                        isDirectory: false,
+                        visualBytes: other
                     )
                 )
             }
         }
 
-        return slices.filter { $0.byteSize > 0 }
+        slices = slices.filter { $0.byteSize > 0 }
+
+        if softenDominance {
+            slices = applyVisualFloor(to: slices)
+        }
+
+        return slices
+    }
+
+    /// Guarantee each tile at least ~6% visual area so small folders stay clickable.
+    private static func applyVisualFloor(to slices: [SpaceLensSlice]) -> [SpaceLensSlice] {
+        guard slices.count > 1 else { return slices }
+        let total = Double(slices.reduce(Int64(0)) { $0 + $1.byteSize })
+        guard total > 0 else { return slices }
+
+        let floor = 0.06
+        var shares = slices.map { max(Double($0.byteSize) / total, floor) }
+        let sum = shares.reduce(0, +)
+        shares = shares.map { $0 / sum }
+
+        return zip(slices, shares).map { slice, share in
+            var copy = slice
+            copy.visualBytes = Int64((share * total).rounded())
+            return copy
+        }
+    }
+}
+
+// MARK: - Ranked browser (dominant-folder friendly)
+
+private struct SpaceLensRankedBrowser: View {
+    let children: [TreemapNode]
+    let totalBytes: Int64
+    var isDirectory: (URL) -> Bool
+    var onOpen: (TreemapNode) -> Void
+    var onReveal: (TreemapNode) -> Void
+
+    var body: some View {
+        let palette = SpaceLensPalette.colors
+        let top = children.first
+
+        ScrollView {
+            VStack(alignment: .leading, spacing: AppSpacing.md) {
+                if let top, Double(top.byteSize) / Double(max(totalBytes, 1)) >= 0.45 {
+                    dominantHero(top, color: palette[0])
+                }
+
+                LazyVStack(spacing: AppSpacing.sm) {
+                    ForEach(Array(children.enumerated()), id: \.element.id) { index, node in
+                        rankedRow(
+                            node,
+                            color: palette[index % palette.count],
+                            isHeroDuplicate: top?.id == node.id && Double(top?.byteSize ?? 0) / Double(max(totalBytes, 1)) >= 0.45
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    private func dominantHero(_ node: TreemapNode, color: Color) -> some View {
+        let directory = isDirectory(node.url) || !node.children.isEmpty
+        return Button {
+            onOpen(node)
+        } label: {
+            HStack(spacing: AppSpacing.lg) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: AppRadius.xl, style: .continuous)
+                        .fill(
+                            LinearGradient(
+                                colors: [color, color.opacity(0.72)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 56, height: 56)
+                    Image(systemName: directory ? "folder.fill" : "doc.fill")
+                        .font(.system(size: 22, weight: .semibold))
+                        .foregroundStyle(.white)
+                }
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(directory ? "Largest folder" : "Largest item")
+                        .font(AppTypography.caption)
+                        .foregroundStyle(.white.opacity(0.75))
+                    Text(node.name)
+                        .font(AppTypography.title2)
+                        .foregroundStyle(.white)
+                        .lineLimit(1)
+                    Text("\(ByteFormat.string(from: node.byteSize)) · \(SpaceLensPalette.percentLabel(bytes: node.byteSize, total: totalBytes)) of this folder")
+                        .font(AppTypography.callout)
+                        .foregroundStyle(.white.opacity(0.85))
+                        .monospacedDigit()
+                }
+
+                Spacer(minLength: 0)
+
+                VStack(alignment: .trailing, spacing: 6) {
+                    Text(directory ? "Open" : "Reveal")
+                        .font(AppTypography.bodyMedium)
+                        .foregroundStyle(.white)
+                    Image(systemName: directory ? "chevron.right.circle.fill" : "arrow.up.right.circle.fill")
+                        .font(.system(size: 22, weight: .semibold))
+                        .foregroundStyle(.white.opacity(0.95))
+                }
+            }
+            .padding(AppSpacing.lg)
+            .background(
+                RoundedRectangle(cornerRadius: AppRadius.xxl, style: .continuous)
+                    .fill(
+                        LinearGradient(
+                            colors: [color.opacity(0.95), color.opacity(0.75)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: AppRadius.xxl, style: .continuous)
+                    .strokeBorder(Color.white.opacity(0.16), lineWidth: 1)
+            )
+        }
+        .buttonStyle(.plain)
+        .help(directory ? "Open \(node.name) to see what’s inside" : "Reveal \(node.name) in Finder")
+    }
+
+    private func rankedRow(_ node: TreemapNode, color: Color, isHeroDuplicate: Bool) -> some View {
+        let directory = isDirectory(node.url) || !node.children.isEmpty
+        let share = CGFloat(Double(node.byteSize) / Double(max(totalBytes, 1)))
+
+        return Button {
+            onOpen(node)
+        } label: {
+            HStack(spacing: AppSpacing.md) {
+                RoundedRectangle(cornerRadius: 4, style: .continuous)
+                    .fill(color)
+                    .frame(width: 4, height: 36)
+
+                Image(systemName: directory ? "folder.fill" : "doc.fill")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(color)
+                    .frame(width: 22)
+
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack(alignment: .firstTextBaseline) {
+                        Text(node.name)
+                            .font(AppTypography.bodyMedium)
+                            .foregroundStyle(AppColors.textPrimary)
+                            .lineLimit(1)
+                        Spacer(minLength: AppSpacing.sm)
+                        Text(ByteFormat.string(from: node.byteSize))
+                            .font(AppTypography.calloutMedium)
+                            .foregroundStyle(AppColors.textPrimary)
+                            .monospacedDigit()
+                        Text(SpaceLensPalette.percentLabel(bytes: node.byteSize, total: totalBytes))
+                            .font(AppTypography.caption)
+                            .foregroundStyle(AppColors.textTertiary)
+                            .monospacedDigit()
+                            .frame(width: 40, alignment: .trailing)
+                    }
+
+                    GeometryReader { geo in
+                        ZStack(alignment: .leading) {
+                            Capsule(style: .continuous)
+                                .fill(AppColors.progressTrack)
+                            Capsule(style: .continuous)
+                                .fill(color.opacity(0.9))
+                                .frame(width: max(6, geo.size.width * share))
+                        }
+                    }
+                    .frame(height: 6)
+                }
+
+                if directory {
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(AppColors.textTertiary)
+                } else {
+                    IconButton(systemName: "folder", size: 28, iconSize: 11) {
+                        onReveal(node)
+                    }
+                }
+            }
+            .padding(.horizontal, AppSpacing.md)
+            .padding(.vertical, AppSpacing.sm)
+            .background(
+                RoundedRectangle(cornerRadius: AppRadius.xl, style: .continuous)
+                    .fill(isHeroDuplicate ? AppColors.accentMuted.opacity(0.35) : AppColors.surface)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: AppRadius.xl, style: .continuous)
+                    .strokeBorder(AppColors.border, lineWidth: 1)
+            )
+            .contentShape(RoundedRectangle(cornerRadius: AppRadius.xl, style: .continuous))
+        }
+        .buttonStyle(.plain)
     }
 }
 
@@ -264,6 +533,9 @@ private struct SpaceLensCompositionBar: View {
     var body: some View {
         VStack(alignment: .leading, spacing: AppSpacing.md) {
             HStack(alignment: .firstTextBaseline) {
+                Text("Breakdown")
+                    .font(AppTypography.captionMedium)
+                    .foregroundStyle(AppColors.textTertiary)
                 Spacer()
                 Text(ByteFormat.string(from: totalBytes))
                     .font(AppTypography.captionMedium)
@@ -274,7 +546,9 @@ private struct SpaceLensCompositionBar: View {
             GeometryReader { geo in
                 HStack(spacing: 0) {
                     ForEach(slices) { slice in
-                        let width = max(4, geo.size.width * CGFloat(slice.byteSize) / CGFloat(total))
+                        // Floor each segment so tiny items remain visible in the bar.
+                        let raw = geo.size.width * CGFloat(slice.byteSize) / CGFloat(total)
+                        let width = max(slices.count > 12 ? 3 : 5, raw)
                         Rectangle()
                             .fill(slice.color)
                             .frame(width: width)
@@ -325,7 +599,6 @@ private struct FlowLegend: View {
     }
 }
 
-/// Simple wrapping HStack for legend chips without pulling in a layout package.
 private struct FlexibleLegendLayout: Layout {
     var spacing: CGFloat = 12
 
@@ -373,7 +646,7 @@ private struct FlexibleLegendLayout: Layout {
     }
 }
 
-// MARK: - Bento treemap
+// MARK: - Bento treemap (balanced folders)
 
 private struct SpaceLensBentoGrid: View {
     let slices: [SpaceLensSlice]
@@ -384,14 +657,14 @@ private struct SpaceLensBentoGrid: View {
         GeometryReader { geo in
             let gap: CGFloat = 10
             let bounds = CGRect(origin: .zero, size: geo.size)
-            let weights = slices.map { Double($0.byteSize) }
+            let weights = slices.map { Double(max($0.visualBytes, 1)) }
             let rects = SquarifiedTreemap.layout(weights: weights, in: bounds)
 
             ZStack(alignment: .topLeading) {
                 ForEach(Array(slices.enumerated()), id: \.element.id) { index, slice in
                     let raw = index < rects.count ? rects[index] : .zero
                     let frame = raw.insetBy(dx: gap / 2, dy: gap / 2)
-                    if frame.width > 8, frame.height > 8 {
+                    if frame.width > 10, frame.height > 10 {
                         SpaceLensBentoTile(
                             slice: slice,
                             totalBytes: totalBytes,

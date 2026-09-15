@@ -329,31 +329,20 @@ struct SmartScanView: View {
     }
 
     private var warningsBanner: some View {
-        VStack(alignment: .leading, spacing: AppSpacing.xs) {
-            HStack(spacing: AppSpacing.xs) {
-                Image(systemName: "exclamationmark.triangle.fill")
-                    .foregroundStyle(AppColors.warning)
-                Text("Some results couldn’t be calculated")
-                    .font(AppTypography.bodyMedium)
-                    .foregroundStyle(AppColors.textPrimary)
-            }
-            ForEach(summary.scannerWarnings, id: \.self) { warning in
-                Text(warning)
-                    .font(AppTypography.caption)
-                    .foregroundStyle(AppColors.textSecondary)
-                    .padding(.leading, AppSpacing.lg)
-            }
-        }
-        .padding(AppSpacing.md)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            RoundedRectangle(cornerRadius: AppRadius.lg, style: .continuous)
-                .fill(AppColors.surface)
+        ScanCoverageBanner(
+            title: "Focused on the biggest finds",
+            summary: "Large folders stay snappy — your cleanup list below is ready.",
+            notes: friendlyCoverageNotes,
+            permissionsTitle: "Permissions",
+            rescanTitle: "Rescan",
+            onPermissions: { appState.openManagePermissions() },
+            onRescan: { Task { await appState.runSmartScan() } }
         )
-        .overlay(
-            RoundedRectangle(cornerRadius: AppRadius.lg, style: .continuous)
-                .strokeBorder(AppColors.border, lineWidth: 1)
-        )
+    }
+
+    /// Soften any older stored warning copy so it never reads like an app error.
+    private var friendlyCoverageNotes: [String] {
+        summary.scannerWarnings.map { ScanCoverageCopy.friendly($0) }
     }
 
     private var footerStrip: some View {

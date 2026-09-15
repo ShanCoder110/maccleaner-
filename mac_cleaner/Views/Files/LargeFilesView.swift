@@ -207,13 +207,13 @@ struct LargeFilesView: View {
 
     private func incompleteBanner(_ message: String) -> some View {
         HStack(alignment: .top, spacing: AppSpacing.sm) {
-            Image(systemName: "info.circle")
+            Image(systemName: "sparkles")
                 .foregroundStyle(AppColors.accent)
             VStack(alignment: .leading, spacing: 4) {
-                Text("Scan incomplete")
+                Text("Showing the biggest files first")
                     .font(AppTypography.captionMedium)
                     .foregroundStyle(AppColors.textPrimary)
-                Text(message)
+                Text(ScanCoverageCopy.friendly(message))
                     .font(AppTypography.caption)
                     .foregroundStyle(AppColors.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)

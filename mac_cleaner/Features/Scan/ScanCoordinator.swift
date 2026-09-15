@@ -47,7 +47,7 @@ enum ScanCoordinator {
             setStage(session, .largeFiles, .running, progress: 0.24, label: "Finding large files…")
             if scope.isEmpty {
                 skip(session, .largeFiles, "No folders")
-                warnings.append("Large files limited — authorize folders to scan")
+                warnings.append("Authorize folders in Permissions to unlock Large Files and more categories.")
             } else {
                 let outcome = await ScanTask.detached {
                     LargeFilesScanner(minimumBytes: 50 * 1024 * 1024).scan(roots: scope.roots)

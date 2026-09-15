@@ -13,7 +13,7 @@ struct LargeFilesScanResult: Sendable {
 
     var warning: String? {
         guard incomplete else { return nil }
-        return "Scan incomplete — showing the \(itemLimit.formatted()) largest files. Authorize a smaller folder or raise the size threshold."
+        return "Showing the \(itemLimit.formatted()) largest files to keep the scan fast. For a deeper look, open Large Files or authorize a smaller folder."
     }
 }
 

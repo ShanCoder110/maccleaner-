@@ -383,12 +383,12 @@ enum DuplicateScanLimits: Sendable {
         var list: [String] = []
         if hitEntryLimit {
             list.append(
-                "A folder had more than \(entryLimit.formatted()) files. Remaining files were skipped — authorize a smaller folder for a complete scan."
+                "A folder had more than \(entryLimit.formatted()) files, so we focused on the strongest matches. Authorize a smaller folder if you want every file checked."
             )
         }
         if hitGroupLimit {
             list.append(
-                "Showing the \(groupLimit.formatted()) largest duplicate groups. Authorize a smaller folder to see more."
+                "Showing the \(groupLimit.formatted()) largest duplicate groups. Open Duplicates after authorizing a smaller folder to go deeper."
             )
         }
         return list

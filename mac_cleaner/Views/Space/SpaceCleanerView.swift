@@ -42,26 +42,37 @@ struct SpaceCleanerView: View {
         }
     }
 
-    private var selectedURLs: [URL] {
-        uniqueURLs(hubRows.flatMap { row in
-            guard includedSources.contains(row.source) else { return [URL]() }
-            return row.snapshot.urls
-        })
+    /// Single source of truth for Clean Selected + confirmation dialog.
+    /// In junk detail, only selected junk counts; on the hub, only included sources (deduped).
+    private var cleanupPlan: SpaceCleanupPlan {
+        if showingJunkDetail {
+            return plan(from: selectedJunkItems)
+        }
+
+        var byPath: [String: Int64] = [:]
+        var urls: [URL] = []
+
+        for source in SpaceCleanupSource.allCases where includedSources.contains(source) {
+            for entry in sizedEntries(for: source) {
+                let key = SmartScanAggregator.canonicalPath(entry.url)
+                if byPath[key] == nil {
+                    byPath[key] = entry.bytes
+                    urls.append(entry.url)
+                }
+            }
+        }
+
+        let bytes = byPath.values.reduce(Int64(0), +)
+        return SpaceCleanupPlan(urls: urls, bytes: bytes, count: urls.count)
     }
 
-    private var selectedBytes: Int64 {
-        hubRows.reduce(0) { total, row in
-            guard includedSources.contains(row.source) else { return total }
-            return total + row.snapshot.bytes
-        }
+    private var selectedJunkItems: [StorageItem] {
+        space.categories.flatMap(\.items).filter(\.isSelected)
     }
 
-    private var selectedItemCount: Int {
-        hubRows.reduce(0) { total, row in
-            guard includedSources.contains(row.source) else { return total }
-            return total + row.snapshot.selectedCount
-        }
-    }
+    private var selectedURLs: [URL] { cleanupPlan.urls }
+    private var selectedBytes: Int64 { cleanupPlan.bytes }
+    private var selectedItemCount: Int { cleanupPlan.count }
 
     private var recoverableTotal: Int64 {
         max(hubRows.reduce(0) { $0 + $1.snapshot.bytes }, selectedBytes, 1)
@@ -123,7 +134,7 @@ struct SpaceCleanerView: View {
             Button("Move to Trash", role: .destructive) { Task { await clean() } }
             Button("Cancel", role: .cancel) {}
         } message: {
-            Text("\(ByteFormat.string(from: selectedBytes))\n\(selectedItemCount) items\n\nSelected items will be moved to Trash. Nothing is permanently deleted.")
+            Text("\(ByteFormat.string(from: cleanupPlan.bytes)) · \(cleanupPlan.count) item\(cleanupPlan.count == 1 ? "" : "s")\n\nSelected items will be moved to Trash. Nothing is permanently deleted.")
         }
     }
 
@@ -277,7 +288,7 @@ struct SpaceCleanerView: View {
                 title: "Junk categories",
                 subtitle: "Sensitive items stay unchecked by default"
             ) {
-                SizeBadge(value: ByteFormat.string(from: snapshot(for: .junk).bytes), emphasis: .accent)
+                SizeBadge(value: ByteFormat.string(from: cleanupPlan.bytes), emphasis: .accent)
             }
 
             if space.categories.isEmpty {
@@ -373,25 +384,53 @@ struct SpaceCleanerView: View {
     }
 
     private func snapshot(for source: SpaceCleanupSource) -> SpaceCleanupSnapshot {
+        let entries = sizedEntries(for: source)
+        let bytes = entries.reduce(Int64(0)) { $0 + $1.bytes }
+        return SpaceCleanupSnapshot(
+            bytes: bytes,
+            selectedCount: entries.count,
+            urls: entries.map(\.url),
+            itemCount: totalItemCount(for: source)
+        )
+    }
+
+    private func sizedEntries(for source: SpaceCleanupSource) -> [(url: URL, bytes: Int64)] {
         switch source {
         case .junk:
-            let items = space.categories.flatMap(\.items).filter(\.isSelected)
-            return SpaceCleanupSnapshot(bytes: items.reduce(0) { $0 + $1.byteSize }, selectedCount: items.count, urls: items.map(\.url), itemCount: space.categories.flatMap(\.items).count)
+            return space.categories.flatMap(\.items).filter(\.isSelected).map { ($0.url, $0.byteSize) }
         case .largeFiles:
-            let items = scanResults.largeFiles.items.filter(\.isSelected)
-            return SpaceCleanupSnapshot(bytes: items.reduce(0) { $0 + $1.byteSize }, selectedCount: items.count, urls: items.map(\.url), itemCount: scanResults.largeFiles.items.count)
+            return scanResults.largeFiles.items.filter(\.isSelected).map { ($0.url, $0.byteSize) }
         case .duplicates:
-            let files = scanResults.duplicates.groups.flatMap(\.files).filter(\.isSelected)
-            return SpaceCleanupSnapshot(bytes: files.reduce(0) { $0 + $1.byteSize }, selectedCount: files.count, urls: files.map(\.url), itemCount: scanResults.duplicates.groups.flatMap(\.files).count)
+            return scanResults.duplicates.groups.flatMap(\.files).filter(\.isSelected).map { ($0.url, $0.byteSize) }
         case .leftovers:
-            let items = scanResults.orphans.items.filter(\.isSelected)
-            return SpaceCleanupSnapshot(bytes: items.reduce(0) { $0 + $1.byteSize }, selectedCount: items.count, urls: items.map(\.url), itemCount: scanResults.orphans.items.count)
+            return scanResults.orphans.items.filter(\.isSelected).map { ($0.url, $0.byteSize) }
         }
     }
 
-    private func uniqueURLs(_ urls: [URL]) -> [URL] {
-        var seen = Set<String>()
-        return urls.filter { seen.insert(SmartScanAggregator.canonicalPath($0)).inserted }
+    private func totalItemCount(for source: SpaceCleanupSource) -> Int {
+        switch source {
+        case .junk:
+            return space.categories.flatMap(\.items).count
+        case .largeFiles:
+            return scanResults.largeFiles.items.count
+        case .duplicates:
+            return scanResults.duplicates.groups.flatMap(\.files).count
+        case .leftovers:
+            return scanResults.orphans.items.count
+        }
+    }
+
+    private func plan(from items: [StorageItem]) -> SpaceCleanupPlan {
+        var byPath: [String: Int64] = [:]
+        var urls: [URL] = []
+        for item in items {
+            let key = SmartScanAggregator.canonicalPath(item.url)
+            if byPath[key] == nil {
+                byPath[key] = item.byteSize
+                urls.append(item.url)
+            }
+        }
+        return SpaceCleanupPlan(urls: urls, bytes: byPath.values.reduce(0, +), count: urls.count)
     }
 
     private func rescan() {
@@ -405,12 +444,13 @@ struct SpaceCleanerView: View {
 
     private func clean() async {
         isCleaning = true
-        let urls = selectedURLs
+        let plan = cleanupPlan
+        let urls = plan.urls
 
-        let selectedItems = space.categories.flatMap(\.items).filter(\.isSelected)
+        let selectedItems = selectedJunkItems
         let rootOwnedItems = selectedItems.filter(\.isRootOwned)
 
-        if !rootOwnedItems.isEmpty {
+        if showingJunkDetail, !rootOwnedItems.isEmpty {
             let names = rootOwnedItems.prefix(3).map(\.name).joined(separator: ", ")
             let more = rootOwnedItems.count > 3 ? " and \(rootOwnedItems.count - 3) more" : ""
             statusMessage = FileOwnership.skippedRootOwnedStatus(names: names, more: more)
@@ -489,6 +529,12 @@ private struct SpaceCleanupSnapshot {
     var selectedCount: Int
     var urls: [URL]
     var itemCount: Int
+}
+
+private struct SpaceCleanupPlan {
+    var urls: [URL]
+    var bytes: Int64
+    var count: Int
 }
 
 private struct SpaceCleanupRow: Identifiable {
