@@ -17,7 +17,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		DBB803A23039B39800088D1B /* MacCleaner+.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "MacCleaner+.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		DBB803A23039B39800088D1B /* Mac Cleaner.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Mac Cleaner.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		DBB804C03039B39A00088D1B /* mac_cleanerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = mac_cleanerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -64,7 +64,7 @@
 		DBB803A33039B39800088D1B /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				DBB803A23039B39800088D1B /* MacCleaner+.app */,
+				DBB803A23039B39800088D1B /* Mac Cleaner.app */,
 				DBB804C03039B39A00088D1B /* mac_cleanerTests.xctest */,
 			);
 			name = Products;
@@ -92,7 +92,7 @@
 			packageProductDependencies = (
 			);
 			productName = mac_cleaner;
-			productReference = DBB803A23039B39800088D1B /* MacCleaner+.app */;
+			productReference = DBB803A23039B39800088D1B /* Mac Cleaner.app */;
 			productType = "com.apple.product-type.application";
 		};
 		DBB804C53039B39A00088D1B /* mac_cleanerTests */ = {
@@ -356,7 +356,7 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = shan.maccleaner.plus;
 				PRODUCT_MODULE_NAME = mac_cleaner;
-				PRODUCT_NAME = "MacCleaner+";
+				PRODUCT_NAME = "Mac Cleaner";
 				REGISTER_APP_GROUPS = NO;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -399,7 +399,7 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = shan.maccleaner.plus;
 				PRODUCT_MODULE_NAME = mac_cleaner;
-				PRODUCT_NAME = "MacCleaner+";
+				PRODUCT_NAME = "Mac Cleaner";
 				REGISTER_APP_GROUPS = NO;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
