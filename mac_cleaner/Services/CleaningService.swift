@@ -2,7 +2,8 @@
 //  CleaningService.swift
 //  mac_cleaner
 //
-//  Trash-only deletion scoped to security-scoped bookmarks and selected apps.
+//  Trash-only deletion via Finder (NSWorkspace.recycle), scoped to
+//  security-scoped bookmarks and selected apps. Never FileManager.trashItem.
 //
 
 import Foundation
@@ -36,17 +37,14 @@ struct CleaningService {
 
             let size = FileSizeCalculator.size(of: url)
             do {
-                var resultingURL: NSURL?
-                try FileManager.default.trashItem(at: url, resultingItemURL: &resultingURL)
+                try await FinderTrash.recycle(url)
                 result.trashedCount += 1
                 result.freedBytes += size
                 await MainActor.run {
                     log.log(.clean, "Moved to Trash: \(url.lastPathComponent)", path: url.path)
                 }
             } catch {
-                let outcome = await MainActor.run { () -> RetryOutcome in
-                    retryTrash(url: url, size: size, previousError: error)
-                }
+                let outcome = await retryTrash(url: url, size: size, previousError: error)
                 switch outcome {
                 case .succeeded(let freed):
                     result.trashedCount += 1
@@ -75,7 +73,7 @@ struct CleaningService {
     }
 
     @MainActor
-    private func retryTrash(url: URL, size: Int64, previousError: Error) -> RetryOutcome {
+    private func retryTrash(url: URL, size: Int64, previousError: Error) async -> RetryOutcome {
         guard let scoped = bookmarks.requestAccessForTrashing(
             url: url,
             itemName: url.lastPathComponent
@@ -86,8 +84,7 @@ struct CleaningService {
         }
 
         do {
-            var resultingURL: NSURL?
-            try FileManager.default.trashItem(at: scoped, resultingItemURL: &resultingURL)
+            try await FinderTrash.recycle(scoped)
             log.log(.clean, "Moved to Trash: \(scoped.lastPathComponent)", path: scoped.path)
             return .succeeded(size)
         } catch {

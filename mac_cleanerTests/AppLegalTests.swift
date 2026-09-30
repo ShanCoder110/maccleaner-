@@ -76,4 +76,31 @@ struct AppLegalTests {
         #expect(!text.contains("automatically renews"))
         #expect(!text.contains("free trial"))
     }
+
+    @Test func reviewNotesDoNotRequestTrashException() {
+        let notes = AppStoreReviewNotes.fullReviewNotes
+        #expect(notes.contains("NSWorkspace.recycle"))
+        #expect(notes.contains("The previous temporary exception for /.Trash has been removed"))
+        #expect(!notes.contains("temporary exception limited to /.Trash"))
+        #expect(!notes.contains("FileManager.trashItem"))
+
+        let justification = AppStoreReviewNotes.sandboxJustification
+        #expect(justification.contains("NSWorkspace.recycle"))
+        #expect(justification.contains("does not request a temporary exception"))
+        #expect(!justification.contains("is limited to the single path /.Trash"))
+    }
+
+    @Test func entitlementsPlistDoesNotGrantTrashException() throws {
+        let repoRoot = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+        let entitlementsURL = repoRoot.appendingPathComponent("mac_cleaner/mac_cleaner.entitlements")
+        let data = try Data(contentsOf: entitlementsURL)
+        let plist = try PropertyListSerialization.propertyList(from: data, format: nil)
+        let dict = try #require(plist as? [String: Any])
+        #expect(dict["com.apple.security.app-sandbox"] as? Bool == true)
+        #expect(dict["com.apple.security.files.user-selected.read-write"] as? Bool == true)
+        #expect(dict["com.apple.security.files.bookmarks.app-scope"] as? Bool == true)
+        #expect(dict["com.apple.security.temporary-exception.files.home-relative-path.read-write"] == nil)
+    }
 }

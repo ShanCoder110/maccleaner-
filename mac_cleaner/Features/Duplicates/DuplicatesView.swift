@@ -616,9 +616,7 @@ struct DuplicatesView: View {
     }
 
     private func showTrash() {
-        let home = BookmarkStore.realUserHomePath()
-        let trash = URL(fileURLWithPath: home).appendingPathComponent(".Trash")
-        NSWorkspace.shared.open(trash)
+        FinderTrash.revealInFinder()
     }
 }
 

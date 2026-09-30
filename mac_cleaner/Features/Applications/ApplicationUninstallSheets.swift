@@ -99,7 +99,7 @@ struct ApplicationUninstallResultSheet: View {
 
             HStack {
                 SecondaryButton(title: "Show in Trash", size: .compact) {
-                    NSWorkspace.shared.selectFile(nil, inFileViewerRootedAtPath: "\(NSHomeDirectory())/.Trash")
+                    FinderTrash.revealInFinder()
                 }
                 SecondaryButton(title: "View Activity", size: .compact) {
                     model.showResultSheet = false
