@@ -11,10 +11,17 @@ import Foundation
 
 enum AppStoreReviewNotes {
     static let fullReviewNotes = """
-    Mac Cleaner: Clean Up Storage (bundle ID shan.maccleaner.plus)
+    Storage Cleaner: Clean Up Disk (bundle ID shan.maccleaner.plus — unchanged)
 
     WHAT IT IS
     A sandboxed macOS storage manager. It scans only folders the user grants with NSOpenPanel and persists those grants with app-scoped security-scoped bookmarks. All deletion asks Finder to move items to Trash via NSWorkspace.recycle — never FileManager.trashItem or FileManager.removeItem — so users can restore from Trash. It is not a speed booster, RAM cleaner, antivirus, or security tool.
+
+    NAME (Guideline 5.2.5)
+    We removed the word “Mac” from the product name so it is not confusingly similar to Apple products.
+    • App Store name: Storage Cleaner: Clean Up Disk
+    • Installed name (Dock / menu bar): Storage Cleaner
+    • Bundle Identifier is unchanged: shan.maccleaner.plus
+    Remaining uses of “Mac” or “macOS” refer only to the Apple platform, not to our product name.
 
     NO DEMO ACCOUNT
     There is no login. Review on a Mac with a Sandbox Apple ID if you test In-App Purchase.
@@ -34,7 +41,8 @@ enum AppStoreReviewNotes {
     There is no Downloads-folder entitlement. Downloads, Desktop, Documents, and volumes are accessed only after the user grants a folder in NSOpenPanel.
 
     IN-APP PURCHASE (Guideline 3.1.2)
-    Subscription group: Mac Cleaner Pro
+    Subscription group display name: Storage Cleaner Pro
+    Product IDs are unchanged:
     • shan.maccleaner.plus.pro.monthly — auto-renewable, 1 month, 3-day free trial for eligible new subscribers
     • shan.maccleaner.plus.pro.yearly — auto-renewable, 1 year, 3-day free trial for eligible new subscribers
     • shan.maccleaner.plus.pro.lifetime — non-consumable, no trial
@@ -49,7 +57,7 @@ enum AppStoreReviewNotes {
 
     /// Guideline 2.4.5(i) sandbox justification after removing the Trash exception.
     static let sandboxJustification = """
-    Mac Cleaner: Clean Up Storage is fully sandboxed (com.apple.security.app-sandbox). It only \
+    Storage Cleaner: Clean Up Disk is fully sandboxed (com.apple.security.app-sandbox). It only \
     scans folders the user grants through NSOpenPanel and persists those grants \
     with app-scoped security-scoped bookmarks.
 

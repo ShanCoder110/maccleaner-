@@ -17,7 +17,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		DBB803A23039B39800088D1B /* Mac Cleaner.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Mac Cleaner.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		DBB803A23039B39800088D1B /* Storage Cleaner.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Storage Cleaner.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		DBB804C03039B39A00088D1B /* mac_cleanerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = mac_cleanerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -64,7 +64,7 @@
 		DBB803A33039B39800088D1B /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				DBB803A23039B39800088D1B /* Mac Cleaner.app */,
+				DBB803A23039B39800088D1B /* Storage Cleaner.app */,
 				DBB804C03039B39A00088D1B /* mac_cleanerTests.xctest */,
 			);
 			name = Products;
@@ -92,7 +92,7 @@
 			packageProductDependencies = (
 			);
 			productName = mac_cleaner;
-			productReference = DBB803A23039B39800088D1B /* Mac Cleaner.app */;
+			productReference = DBB803A23039B39800088D1B /* Storage Cleaner.app */;
 			productType = "com.apple.product-type.application";
 		};
 		DBB804C53039B39A00088D1B /* mac_cleanerTests */ = {
@@ -339,15 +339,15 @@
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readwrite;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = "Mac Cleaner";
-				INFOPLIST_KEY_CFBundleName = "Mac Cleaner";
+				INFOPLIST_KEY_CFBundleDisplayName = "Storage Cleaner";
+				INFOPLIST_KEY_CFBundleName = "Storage Cleaner";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
-				INFOPLIST_KEY_NSDesktopFolderUsageDescription = "Mac Cleaner can scan and move files to Trash inside your Desktop folder only after you grant access.";
-				INFOPLIST_KEY_NSDocumentsFolderUsageDescription = "Mac Cleaner can scan and move files to Trash inside your Documents folder only after you grant access.";
-				INFOPLIST_KEY_NSDownloadsFolderUsageDescription = "Mac Cleaner can scan and move files to Trash inside your Downloads folder only after you grant access.";
-				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2026 Mac Cleaner. All rights reserved.";
-				INFOPLIST_KEY_NSNetworkVolumesUsageDescription = "Mac Cleaner can scan and move files to Trash on a network volume only after you grant access to a folder on that volume.";
-				INFOPLIST_KEY_NSRemovableVolumesUsageDescription = "Mac Cleaner can scan and move files to Trash on a removable volume only after you grant access to a folder on that volume.";
+				INFOPLIST_KEY_NSDesktopFolderUsageDescription = "Storage Cleaner can scan and move files to Trash inside your Desktop folder only after you grant access.";
+				INFOPLIST_KEY_NSDocumentsFolderUsageDescription = "Storage Cleaner can scan and move files to Trash inside your Documents folder only after you grant access.";
+				INFOPLIST_KEY_NSDownloadsFolderUsageDescription = "Storage Cleaner can scan and move files to Trash inside your Downloads folder only after you grant access.";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2026 Storage Cleaner. All rights reserved.";
+				INFOPLIST_KEY_NSNetworkVolumesUsageDescription = "Storage Cleaner can scan and move files to Trash on a network volume only after you grant access to a folder on that volume.";
+				INFOPLIST_KEY_NSRemovableVolumesUsageDescription = "Storage Cleaner can scan and move files to Trash on a removable volume only after you grant access to a folder on that volume.";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -356,7 +356,7 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = shan.maccleaner.plus;
 				PRODUCT_MODULE_NAME = mac_cleaner;
-				PRODUCT_NAME = "Mac Cleaner";
+				PRODUCT_NAME = "Storage Cleaner";
 				REGISTER_APP_GROUPS = NO;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -382,15 +382,15 @@
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readwrite;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = "Mac Cleaner";
-				INFOPLIST_KEY_CFBundleName = "Mac Cleaner";
+				INFOPLIST_KEY_CFBundleDisplayName = "Storage Cleaner";
+				INFOPLIST_KEY_CFBundleName = "Storage Cleaner";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
-				INFOPLIST_KEY_NSDesktopFolderUsageDescription = "Mac Cleaner can scan and move files to Trash inside your Desktop folder only after you grant access.";
-				INFOPLIST_KEY_NSDocumentsFolderUsageDescription = "Mac Cleaner can scan and move files to Trash inside your Documents folder only after you grant access.";
-				INFOPLIST_KEY_NSDownloadsFolderUsageDescription = "Mac Cleaner can scan and move files to Trash inside your Downloads folder only after you grant access.";
-				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2026 Mac Cleaner. All rights reserved.";
-				INFOPLIST_KEY_NSNetworkVolumesUsageDescription = "Mac Cleaner can scan and move files to Trash on a network volume only after you grant access to a folder on that volume.";
-				INFOPLIST_KEY_NSRemovableVolumesUsageDescription = "Mac Cleaner can scan and move files to Trash on a removable volume only after you grant access to a folder on that volume.";
+				INFOPLIST_KEY_NSDesktopFolderUsageDescription = "Storage Cleaner can scan and move files to Trash inside your Desktop folder only after you grant access.";
+				INFOPLIST_KEY_NSDocumentsFolderUsageDescription = "Storage Cleaner can scan and move files to Trash inside your Documents folder only after you grant access.";
+				INFOPLIST_KEY_NSDownloadsFolderUsageDescription = "Storage Cleaner can scan and move files to Trash inside your Downloads folder only after you grant access.";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2026 Storage Cleaner. All rights reserved.";
+				INFOPLIST_KEY_NSNetworkVolumesUsageDescription = "Storage Cleaner can scan and move files to Trash on a network volume only after you grant access to a folder on that volume.";
+				INFOPLIST_KEY_NSRemovableVolumesUsageDescription = "Storage Cleaner can scan and move files to Trash on a removable volume only after you grant access to a folder on that volume.";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -399,7 +399,7 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = shan.maccleaner.plus;
 				PRODUCT_MODULE_NAME = mac_cleaner;
-				PRODUCT_NAME = "Mac Cleaner";
+				PRODUCT_NAME = "Storage Cleaner";
 				REGISTER_APP_GROUPS = NO;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -425,7 +425,7 @@
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/MacCleaner+.app/Contents/MacOS/MacCleaner+";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Storage Cleaner.app/Contents/MacOS/Storage Cleaner";
 			};
 			name = Debug;
 		};
@@ -444,7 +444,7 @@
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/MacCleaner+.app/Contents/MacOS/MacCleaner+";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Storage Cleaner.app/Contents/MacOS/Storage Cleaner";
 			};
 			name = Release;
 		};

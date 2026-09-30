@@ -40,7 +40,7 @@ struct AppInventoryService: Sendable {
         return apps.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
     }
 
-    /// Never list MacCleaner+ in Applications — users shouldn't uninstall the running app from here.
+    /// Never list this app in Applications — users shouldn't uninstall the running app from here.
     private static func isCurrentApp(
         _ app: InstalledApp,
         selfBundleID: String?,

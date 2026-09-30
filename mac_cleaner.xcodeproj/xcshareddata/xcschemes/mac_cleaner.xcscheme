@@ -15,7 +15,7 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "DBB803A13039B39800088D1B"
-               BuildableName = "MacCleaner+.app"
+               BuildableName = "Storage Cleaner.app"
                BlueprintName = "mac_cleaner"
                ReferencedContainer = "container:mac_cleaner.xcodeproj">
             </BuildableReference>
@@ -44,7 +44,7 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "DBB803A13039B39800088D1B"
-            BuildableName = "MacCleaner+.app"
+            BuildableName = "Storage Cleaner.app"
             BlueprintName = "mac_cleaner"
             ReferencedContainer = "container:mac_cleaner.xcodeproj">
          </BuildableReference>
@@ -64,7 +64,7 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "DBB803A13039B39800088D1B"
-            BuildableName = "MacCleaner+.app"
+            BuildableName = "Storage Cleaner.app"
             BlueprintName = "mac_cleaner"
             ReferencedContainer = "container:mac_cleaner.xcodeproj">
          </BuildableReference>

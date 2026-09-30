@@ -61,7 +61,7 @@ struct AppFilterChipGroup<T: Hashable>: View {
     }
 }
 
-/// Styled menu picker matching MacCleaner+ controls (not system Picker chrome).
+/// Styled menu picker matching Storage Cleaner controls (not system Picker chrome).
 struct AppMenuPicker<T: Hashable>: View {
     var label: String? = nil
     let options: [(T, String)]

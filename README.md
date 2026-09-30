@@ -1,6 +1,6 @@
-# Mac Cleaner: Clean Up Storage
+# Storage Cleaner: Clean Up Disk
 
-Sandboxed macOS storage manager and app uninstaller for the Mac App Store.
+Sandboxed macOS storage manager and app uninstaller for the Mac App Store. The installed and App Store name is **Storage Cleaner** / **Storage Cleaner: Clean Up Disk** (no Apple trademarks). Bundle ID `shan.maccleaner.plus` is unchanged.
 
 ## Features
 
@@ -28,7 +28,7 @@ Sandboxed macOS storage manager and app uninstaller for the Mac App Store.
 
 | | |
 |---|---|
-| Display name | Mac Cleaner: Clean Up Storage (Dock / menu bar: Mac Cleaner) |
+| Display name | Storage Cleaner: Clean Up Disk (Dock / menu bar: Storage Cleaner) |
 | Bundle ID | `shan.maccleaner.plus` |
 | Version | 1.0 |
 

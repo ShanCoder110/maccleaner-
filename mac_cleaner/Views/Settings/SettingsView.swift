@@ -337,10 +337,10 @@ struct SettingsView: View {
             )
         ) {
             VStack(alignment: .leading, spacing: AppSpacing.md) {
-                // Text("\(AppLegal.displayName) is a sandboxed storage manager — not a speed booster or security tool.")
-                //     .font(AppTypography.callout)
-                //     .foregroundStyle(AppColors.textSecondary)
-                //     .fixedSize(horizontal: false, vertical: true)
+                Text(AppLegal.displayName)
+                    .font(AppTypography.callout)
+                    .foregroundStyle(AppColors.textPrimary)
+                    .fixedSize(horizontal: false, vertical: true)
 
                 VStack(spacing: 0) {
                     Link(destination: AppLegal.rateUsURL) {

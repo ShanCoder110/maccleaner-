@@ -11,11 +11,12 @@ import Foundation
 enum AppLegal {
     static let supportEmail = "support.devshan@gmail.com"
 
-    /// Dock, menu bar extra, and Finder icon label.
-    static let shortName = "Mac Cleaner"
+    /// Dock, menu bar extra, sidebar, and Finder icon label.
+    /// Keep this short — colons are invalid in the .app filename (PRODUCT_NAME).
+    static let shortName = "Storage Cleaner"
 
-    /// In-app product name.
-    static let displayName = "Mac Cleaner: Clean Up Storage"
+    /// App Store / in-app product name (Guideline 5.2.5: no “Mac” in the title).
+    static let displayName = "Storage Cleaner: Clean Up Disk"
 
     static var supportMailtoURL: URL {
         URL(string: "mailto:\(supportEmail)")!

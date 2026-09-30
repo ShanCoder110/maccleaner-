@@ -77,6 +77,16 @@ struct AppLegalTests {
         #expect(!text.contains("free trial"))
     }
 
+    @Test func displayNameDropsAppleMacTrademark() {
+        #expect(AppLegal.shortName == "Storage Cleaner")
+        #expect(AppLegal.displayName == "Storage Cleaner: Clean Up Disk")
+        #expect(!AppLegal.shortName.localizedCaseInsensitiveContains("Mac"))
+        #expect(!AppLegal.displayName.localizedCaseInsensitiveContains("Mac"))
+        #expect(AppStoreReviewNotes.fullReviewNotes.contains("shan.maccleaner.plus — unchanged"))
+        #expect(AppStoreReviewNotes.fullReviewNotes.contains("Storage Cleaner: Clean Up Disk"))
+        #expect(!AppStoreReviewNotes.fullReviewNotes.contains("Mac Cleaner"))
+    }
+
     @Test func reviewNotesDoNotRequestTrashException() {
         let notes = AppStoreReviewNotes.fullReviewNotes
         #expect(notes.contains("NSWorkspace.recycle"))

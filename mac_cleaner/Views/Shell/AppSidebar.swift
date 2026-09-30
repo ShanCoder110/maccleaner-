@@ -101,7 +101,7 @@ struct AppSidebar: View {
                     .font(AppTypography.headline)
                     .foregroundStyle(AppColors.textPrimary)
 
-                Text("Clean Smarter")
+                Text("Clean Up Disk")
                     .font(AppTypography.caption)
                     .foregroundStyle(AppColors.textTertiary)
             }
