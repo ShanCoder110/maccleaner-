@@ -82,7 +82,7 @@ struct AppLegalTests {
         #expect(AppLegal.displayName == "Storage Cleaner: Clean Up Disk")
         #expect(!AppLegal.shortName.localizedCaseInsensitiveContains("Mac"))
         #expect(!AppLegal.displayName.localizedCaseInsensitiveContains("Mac"))
-        #expect(AppStoreReviewNotes.fullReviewNotes.contains("shan.maccleaner.plus — unchanged"))
+        #expect(AppStoreReviewNotes.fullReviewNotes.contains("shan.maccleaner.plus"))
         #expect(AppStoreReviewNotes.fullReviewNotes.contains("Storage Cleaner: Clean Up Disk"))
         #expect(!AppStoreReviewNotes.fullReviewNotes.contains("Mac Cleaner"))
     }
@@ -90,9 +90,10 @@ struct AppLegalTests {
     @Test func reviewNotesDoNotRequestTrashException() {
         let notes = AppStoreReviewNotes.fullReviewNotes
         #expect(notes.contains("NSWorkspace.recycle"))
-        #expect(notes.contains("The previous temporary exception for /.Trash has been removed"))
         #expect(!notes.contains("temporary exception limited to /.Trash"))
         #expect(!notes.contains("FileManager.trashItem"))
+        #expect(!notes.contains("The previous temporary exception"))
+        #expect(!notes.contains("We removed"))
 
         let justification = AppStoreReviewNotes.sandboxJustification
         #expect(justification.contains("NSWorkspace.recycle"))
